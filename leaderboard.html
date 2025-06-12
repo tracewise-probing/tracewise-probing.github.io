@@ -1,0 +1,646 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Code Generation Research Results</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@100;400&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.0/dist/css/bootstrap.min.css">
+    
+    <style>
+        body {
+            font-family: "JetBrains Mono", monospace;
+            background-color: #ffffff;
+            color: #000000;
+            line-height: 1.4;
+        }
+
+        #content {
+            width: 90%;
+            max-width: 1400px;
+        }
+
+        .table-container {
+            background: #f8f9fa;
+            border-radius: 12px;
+            padding: 25px;
+            margin: 30px 0;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            border: 2px solid #e9ecef;
+        }
+
+        .table-title {
+            font-size: 1.4em;
+            font-weight: 600;
+            color: #2c3e50;
+            margin-bottom: 20px;
+            text-align: center;
+            padding: 15px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border-radius: 8px;
+            text-shadow: 1px 1px 2px rgba(0,0,0,0.2);
+        }
+
+        .table {
+            background: white;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            font-size: 0.9em;
+        }
+
+        .table th {
+            background: linear-gradient(135deg, #34495e, #2c3e50);
+            color: white;
+            font-weight: 600;
+            text-align: center;
+            vertical-align: middle;
+            border: none;
+            padding: 12px 8px;
+            font-size: 0.85em;
+        }
+
+        .table td {
+            text-align: center;
+            vertical-align: middle;
+            padding: 10px 8px;
+            border-color: #e9ecef;
+        }
+
+        .table tbody tr:hover {
+            background-color: #f1f3f4;
+            transition: background-color 0.2s ease;
+        }
+
+        .model-name {
+            font-weight: 500;
+            text-align: left !important;
+            color: #2c3e50;
+        }
+
+        .checkmark {
+            color: #28a745;
+            font-weight: bold;
+            font-size: 1.2em;
+        }
+
+        .xmark {
+            color: #dc3545;
+            font-weight: bold;
+            font-size: 1.2em;
+        }
+
+        .best-score {
+            background-color: #d4edda;
+            font-weight: 600;
+            color: #155724;
+        }
+
+        .section-divider {
+            border-top: 3px solid #dee2e6;
+            font-style: italic;
+            background-color: #f8f9fa;
+            font-weight: 500;
+        }
+
+        .header-group {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            font-weight: 600;
+        }
+
+        .metric-header {
+            background: linear-gradient(135deg, #3498db, #2980b9);
+            color: white;
+        }
+
+        h1 {
+            font-size: 2.5em;
+            font-weight: 600;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            text-align: center;
+            margin: 40px 0;
+        }
+
+        .subtitle {
+            text-align: center;
+            color: #6c757d;
+            font-size: 1.1em;
+            margin-bottom: 40px;
+            font-weight: 300;
+        }
+
+        @media screen and (max-width: 1200px) {
+            body {
+                font-size: 14px;
+            }
+            
+            #content {
+                width: 95%;
+            }
+            
+            .table {
+                font-size: 0.8em;
+            }
+            
+            .table th,
+            .table td {
+                padding: 6px 4px;
+            }
+            
+            h1 {
+                font-size: 2em;
+            }
+        }
+
+        @media screen and (max-width: 768px) {
+            .table-container {
+                padding: 15px;
+                margin: 20px 0;
+            }
+            
+            .table {
+                font-size: 0.7em;
+            }
+            
+            .table th,
+            .table td {
+                padding: 4px 2px;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div id="content" class="container-fluid d-flex flex-column align-items-center">
+        <h1>🔬 Code Generation Research Results 🔬</h1>
+        <p class="subtitle">Comprehensive evaluation of semantic information in code generation models across multiple tasks and benchmarks</p>
+
+        <!-- Table 1: Full-Parameter Fine-tuning Results -->
+        <div class="table-container">
+            <div class="table-title">
+                Table 1: Full-Parameter Fine-tuning with Semantic Information
+            </div>
+            <div class="table-responsive">
+                <table class="table table-bordered">
+                    <thead>
+                        <tr>
+                            <th rowspan="2">BaseModel</th>
+                            <th rowspan="2">TrainCorpus</th>
+                            <th colspan="2" class="header-group">Finetune</th>
+                            <th rowspan="2" class="metric-header">Code Repair<br>MBPP-R</th>
+                            <th colspan="3" class="header-group">Code Synthesis</th>
+                            <th colspan="2" class="header-group">Code Reasoning</th>
+                        </tr>
+                        <tr>
+                            <th>downstream</th>
+                            <th>trace</th>
+                            <th>MBPP</th>
+                            <th>BigcodeBench</th>
+                            <th>LiveCodeBench</th>
+                            <th>CRUXEval-I</th>
+                            <th>CRUXEval-O</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td rowspan="8" class="model-name"><strong>DeepSeek-Coder</strong></td>
+                            <td class="model-name">-</td>
+                            <td><span class="xmark">✗</span></td>
+                            <td><span class="xmark">✗</span></td>
+                            <td>17.7</td>
+                            <td>71.9</td>
+                            <td>41.5</td>
+                            <td class="best-score">40.8</td>
+                            <td>40.0</td>
+                            <td>40.4</td>
+                        </tr>
+                        <tr>
+                            <td class="model-name">only NL2Code</td>
+                            <td><span class="checkmark">✓</span></td>
+                            <td><span class="xmark">✗</span></td>
+                            <td>25.4</td>
+                            <td>72.9</td>
+                            <td>43.7</td>
+                            <td>12.6</td>
+                            <td>60.1</td>
+                            <td>55.4</td>
+                        </tr>
+                        <tr>
+                            <td class="model-name">w/o trace</td>
+                            <td><span class="checkmark">✓</span></td>
+                            <td><span class="xmark">✗</span></td>
+                            <td>39.2</td>
+                            <td>75.9</td>
+                            <td>45.4</td>
+                            <td>35.7</td>
+                            <td>61.9</td>
+                            <td>56.6</td>
+                        </tr>
+                        <tr>
+                            <td class="model-name">Concise</td>
+                            <td><span class="checkmark">✓</span></td>
+                            <td><span class="checkmark">✓</span></td>
+                            <td>39.2</td>
+                            <td>74.4</td>
+                            <td>44.3</td>
+                            <td>29.4</td>
+                            <td>61.6</td>
+                            <td>55.0</td>
+                        </tr>
+                        <tr>
+                            <td class="model-name">CodeExecutor</td>
+                            <td><span class="checkmark">✓</span></td>
+                            <td><span class="checkmark">✓</span></td>
+                            <td>38.4</td>
+                            <td class="best-score">77.2</td>
+                            <td>44.6</td>
+                            <td>31.5</td>
+                            <td>60.4</td>
+                            <td>56.1</td>
+                        </tr>
+                        <tr>
+                            <td class="model-name">NeXT</td>
+                            <td><span class="checkmark">✓</span></td>
+                            <td><span class="checkmark">✓</span></td>
+                            <td>37.6</td>
+                            <td>76.7</td>
+                            <td>44.0</td>
+                            <td>36.1</td>
+                            <td>61.3</td>
+                            <td>54.2</td>
+                        </tr>
+                        <tr>
+                            <td class="model-name">SemCoder(GPT4o)</td>
+                            <td><span class="checkmark">✓</span></td>
+                            <td><span class="checkmark">✓</span></td>
+                            <td>37.0</td>
+                            <td>75.7</td>
+                            <td>45.4</td>
+                            <td>31.5</td>
+                            <td class="best-score">62.0</td>
+                            <td class="best-score">58.1</td>
+                        </tr>
+                        <tr>
+                            <td class="model-name">SemCoder</td>
+                            <td><span class="checkmark">✓</span></td>
+                            <td><span class="checkmark">✓</span></td>
+                            <td class="best-score">40.5</td>
+                            <td>76.4</td>
+                            <td class="best-score">45.7</td>
+                            <td>29.0</td>
+                            <td>59.5</td>
+                            <td>55.4</td>
+                        </tr>
+
+                        <tr class="section-divider">
+                            <td rowspan="8" class="model-name"><strong>LLaMA</strong></td>
+                            <td class="model-name">-</td>
+                            <td><span class="xmark">✗</span></td>
+                            <td><span class="xmark">✗</span></td>
+                            <td>20.1</td>
+                            <td>58.6</td>
+                            <td>31.4</td>
+                            <td class="best-score">27.3</td>
+                            <td>42.6</td>
+                            <td>36.2</td>
+                        </tr>
+                        <tr>
+                            <td class="model-name">only NL2Code</td>
+                            <td><span class="checkmark">✓</span></td>
+                            <td><span class="xmark">✗</span></td>
+                            <td>24.9</td>
+                            <td class="best-score">73.7</td>
+                            <td class="best-score">44.1</td>
+                            <td>18.1</td>
+                            <td class="best-score">60.1</td>
+                            <td>55.9</td>
+                        </tr>
+                        <tr>
+                            <td class="model-name">w/o trace</td>
+                            <td><span class="checkmark">✓</span></td>
+                            <td><span class="xmark">✗</span></td>
+                            <td>29.1</td>
+                            <td>59.1</td>
+                            <td>31.6</td>
+                            <td>8.4</td>
+                            <td>58.8</td>
+                            <td>54.0</td>
+                        </tr>
+                        <tr>
+                            <td class="model-name">Concise</td>
+                            <td><span class="checkmark">✓</span></td>
+                            <td><span class="checkmark">✓</span></td>
+                            <td>27.0</td>
+                            <td>59.4</td>
+                            <td>30.4</td>
+                            <td>14.7</td>
+                            <td>55.8</td>
+                            <td>57.6</td>
+                        </tr>
+                        <tr>
+                            <td class="model-name">CodeExecutor</td>
+                            <td><span class="checkmark">✓</span></td>
+                            <td><span class="checkmark">✓</span></td>
+                            <td>24.9</td>
+                            <td>59.4</td>
+                            <td>32.6</td>
+                            <td>9.7</td>
+                            <td>57.0</td>
+                            <td>55.2</td>
+                        </tr>
+                        <tr>
+                            <td class="model-name">NeXT</td>
+                            <td><span class="checkmark">✓</span></td>
+                            <td><span class="checkmark">✓</span></td>
+                            <td>29.1</td>
+                            <td>61.4</td>
+                            <td>30.6</td>
+                            <td>16.0</td>
+                            <td>56.9</td>
+                            <td>52.8</td>
+                        </tr>
+                        <tr>
+                            <td class="model-name">SemCoder(GPT4o)</td>
+                            <td><span class="checkmark">✓</span></td>
+                            <td><span class="checkmark">✓</span></td>
+                            <td>22.2</td>
+                            <td>59.4</td>
+                            <td>31.4</td>
+                            <td>10.9</td>
+                            <td>58.6</td>
+                            <td class="best-score">58.0</td>
+                        </tr>
+                        <tr>
+                            <td class="model-name">SemCoder</td>
+                            <td><span class="checkmark">✓</span></td>
+                            <td><span class="checkmark">✓</span></td>
+                            <td class="best-score">29.4</td>
+                            <td>61.9</td>
+                            <td>33.4</td>
+                            <td>14.7</td>
+                            <td>59.9</td>
+                            <td>55.4</td>
+                        </tr>
+
+                        <tr class="section-divider">
+                            <td rowspan="8" class="model-name"><strong>Gemma2</strong></td>
+                            <td class="model-name">-</td>
+                            <td><span class="xmark">✗</span></td>
+                            <td><span class="xmark">✗</span></td>
+                            <td>20.9</td>
+                            <td class="best-score">63.7</td>
+                            <td class="best-score">29.8</td>
+                            <td class="best-score">32.8</td>
+                            <td>49.2</td>
+                            <td>41.5</td>
+                        </tr>
+                        <tr>
+                            <td class="model-name">only NL2Code</td>
+                            <td><span class="checkmark">✓</span></td>
+                            <td><span class="xmark">✗</span></td>
+                            <td>19.8</td>
+                            <td>61.4</td>
+                            <td>26.8</td>
+                            <td>12.6</td>
+                            <td>57.9</td>
+                            <td>55.6</td>
+                        </tr>
+                        <tr>
+                            <td class="model-name">w/o trace</td>
+                            <td><span class="checkmark">✓</span></td>
+                            <td><span class="xmark">✗</span></td>
+                            <td>24.9</td>
+                            <td>58.4</td>
+                            <td>25.1</td>
+                            <td>6.7</td>
+                            <td>57.8</td>
+                            <td>57.5</td>
+                        </tr>
+                        <tr>
+                            <td class="model-name">Concise</td>
+                            <td><span class="checkmark">✓</span></td>
+                            <td><span class="checkmark">✓</span></td>
+                            <td>22.8</td>
+                            <td>60.2</td>
+                            <td>28.8</td>
+                            <td>8.0</td>
+                            <td>57.6</td>
+                            <td>57.2</td>
+                        </tr>
+                        <tr>
+                            <td class="model-name">CodeExecutor</td>
+                            <td><span class="checkmark">✓</span></td>
+                            <td><span class="checkmark">✓</span></td>
+                            <td>22.8</td>
+                            <td>59.4</td>
+                            <td>27.3</td>
+                            <td>8.8</td>
+                            <td>58.9</td>
+                            <td class="best-score">58.2</td>
+                        </tr>
+                        <tr>
+                            <td class="model-name">NeXT</td>
+                            <td><span class="checkmark">✓</span></td>
+                            <td><span class="checkmark">✓</span></td>
+                            <td>26.2</td>
+                            <td>58.1</td>
+                            <td>26.9</td>
+                            <td>8.8</td>
+                            <td class="best-score">59.5</td>
+                            <td>55.8</td>
+                        </tr>
+                        <tr>
+                            <td class="model-name">SemCoder(GPT4o)</td>
+                            <td><span class="checkmark">✓</span></td>
+                            <td><span class="checkmark">✓</span></td>
+                            <td>24.1</td>
+                            <td>62.9</td>
+                            <td>29.5</td>
+                            <td>8.4</td>
+                            <td>58.9</td>
+                            <td>56.5</td>
+                        </tr>
+                        <tr>
+                            <td class="model-name">SemCoder</td>
+                            <td><span class="checkmark">✓</span></td>
+                            <td><span class="checkmark">✓</span></td>
+                            <td class="best-score">26.2</td>
+                            <td>62.2</td>
+                            <td>27.6</td>
+                            <td>13.0</td>
+                            <td>58.9</td>
+                            <td>56.8</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Table 2: LiveCodeBench Results -->
+        <div class="table-container">
+            <div class="table-title">
+                Table 2: Pass@1 Accuracy on LiveCodeBench (Easy) Private Test Set
+            </div>
+            <div class="table-responsive">
+                <table class="table table-bordered">
+                    <thead>
+                        <tr>
+                            <th rowspan="2">Model</th>
+                            <th rowspan="2">Greedy</th>
+                            <th rowspan="2">COT</th>
+                            <th colspan="5" class="header-group">Sequential Scaling</th>
+                            <th colspan="5" class="header-group">Parallel Scaling</th>
+                        </tr>
+                        <tr>
+                            <th>w/o trace</th>
+                            <th>CodeExecutor</th>
+                            <th>Concise</th>
+                            <th>NeXT</th>
+                            <th>SemCoder</th>
+                            <th>w/o trace</th>
+                            <th>CodeExecutor</th>
+                            <th>Concise</th>
+                            <th>NeXT</th>
+                            <th>SemCoder</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td class="model-name">GPT-4o-mini</td>
+                            <td>73.08</td>
+                            <td>73.08</td>
+                            <td>98.46</td>
+                            <td>98.46</td>
+                            <td class="best-score">99.23</td>
+                            <td class="best-score">99.23</td>
+                            <td class="best-score">99.23</td>
+                            <td>88.46</td>
+                            <td>80.77</td>
+                            <td>80.77</td>
+                            <td>84.62</td>
+                            <td>80.77</td>
+                        </tr>
+                        <tr>
+                            <td class="model-name">deepseek-chat(V3)</td>
+                            <td>84.62</td>
+                            <td class="best-score">100.00</td>
+                            <td class="best-score">100.00</td>
+                            <td class="best-score">100.00</td>
+                            <td class="best-score">100.00</td>
+                            <td class="best-score">100.00</td>
+                            <td class="best-score">100.00</td>
+                            <td>96.15</td>
+                            <td>96.15</td>
+                            <td>96.15</td>
+                            <td>96.15</td>
+                            <td>92.3</td>
+                        </tr>
+                        
+                        <tr class="section-divider">
+                            <td colspan="12" style="text-align: center; font-style: italic; font-weight: 600; background-color: #e9ecef;">
+                                Reasoning Compatible Model
+                            </td>
+                        </tr>
+                        
+                        <tr>
+                            <td class="model-name">AIDC-AI/Marco-o1</td>
+                            <td>53.85</td>
+                            <td>50.00</td>
+                            <td>76.92</td>
+                            <td>69.23</td>
+                            <td>76.92</td>
+                            <td>73.08</td>
+                            <td>73.08</td>
+                            <td>61.54</td>
+                            <td>53.85</td>
+                            <td>69.23</td>
+                            <td>61.54</td>
+                            <td>57.69</td>
+                        </tr>
+                        <tr>
+                            <td class="model-name">microsoft/phi-4</td>
+                            <td>53.85</td>
+                            <td>73.08</td>
+                            <td class="best-score">100.00</td>
+                            <td>96.15</td>
+                            <td class="best-score">100.00</td>
+                            <td>91.54</td>
+                            <td class="best-score">100.00</td>
+                            <td>80.77</td>
+                            <td>76.92</td>
+                            <td>84.62</td>
+                            <td>80.77</td>
+                            <td>84.62</td>
+                        </tr>
+                        
+                        <tr class="section-divider">
+                            <td colspan="12" style="text-align: center; font-style: italic; font-weight: 600; background-color: #e9ecef;">
+                                Instruction of Foundation Model
+                            </td>
+                        </tr>
+                        
+                        <tr>
+                            <td class="model-name">Llama-3.1-8B-Inst</td>
+                            <td>34.62</td>
+                            <td>34.62</td>
+                            <td>67.69</td>
+                            <td>66.92</td>
+                            <td>74.62</td>
+                            <td>74.62</td>
+                            <td>65.38</td>
+                            <td>46.15</td>
+                            <td>42.31</td>
+                            <td>57.69</td>
+                            <td>57.69</td>
+                            <td>57.69</td>
+                        </tr>
+                        <tr>
+                            <td class="model-name">deepseek-coder-6.7b-Inst</td>
+                            <td>42.31</td>
+                            <td>46.15</td>
+                            <td>68.46</td>
+                            <td>61.54</td>
+                            <td>69.23</td>
+                            <td>76.15</td>
+                            <td>69.23</td>
+                            <td>53.85</td>
+                            <td>50.00</td>
+                            <td>57.69</td>
+                            <td>61.54</td>
+                            <td>50.00</td>
+                        </tr>
+                        <tr>
+                            <td class="model-name">Qwen2.5-Coder-7b-Inst</td>
+                            <td>61.54</td>
+                            <td>34.62</td>
+                            <td>83.85</td>
+                            <td>87.69</td>
+                            <td>80.77</td>
+                            <td class="best-score">90.77</td>
+                            <td>86.92</td>
+                            <td>53.85</td>
+                            <td>61.54</td>
+                            <td>65.38</td>
+                            <td>50.00</td>
+                            <td>53.85</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <div style="margin: 50px 0; padding: 20px; background: #f8f9fa; border-radius: 8px; text-align: center;">
+            <p style="color: #6c757d; font-size: 0.9em; margin: 0;">
+                Research results showing the impact of semantic information on code generation tasks across different model architectures and training approaches.
+                Best scores per model group are highlighted in green.
+            </p>
+        </div>
+    </div>
+</body>
+</html>
