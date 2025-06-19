@@ -1,0 +1,32 @@
+# Flask and web framework dependencies
+flask==2.3.3
+flask-cors==4.0.0
+markupsafe==2.1.3
+
+# AI/ML API clients
+openai==1.3.7
+anthropic==0.7.8
+google-generativeai==0.3.2
+
+# Data processing and datasets
+datasets==2.14.6
+
+# Utility libraries (most are built-in, but including versions for consistency)
+typing-extensions==4.8.0
+
+# Note: The following are built-in Python modules and don't need to be installed:
+# - subprocess, sys, tempfile, os, json, time, random, traceback
+# - io, ast, copy, contextlib, faulthandler, multiprocessing
+# - platform, signal, builtins, shutil, base64, zlib, pickle
+# - csv, datetime, concurrent.futures
+
+# Custom modules (these should be local files in your project):
+# - live_code_bench_execute.py
+# - lcb_dataset.py  
+# - util.py
+
+# Optional: If you need scipy (commented out in your code)
+# scipy==1.11.4
+
+# Optional: If you need dspy (commented out in your code)
+# dspy-ai==2.4.9
