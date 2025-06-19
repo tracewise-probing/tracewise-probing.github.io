@@ -1,0 +1,207 @@
+<!doctype html>
+<html>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@100;400&display=swap" rel="stylesheet" />
+
+<head>
+  <meta charset="UTF-8" />
+  <title>Benchmarks by TraceEnhance Team</title>
+  <link rel="icon" href="https://images.emojiterra.com/google/noto-emoji/unicode-15/color/1024px/1f9d1-1f4bb.png" />
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.0/dist/css/bootstrap.min.css" />
+
+  <style>
+    body {
+      font-family: "JetBrains Mono", monospace;
+      background-color: #ffffff;
+      color: #000000;
+    }
+
+    #content {
+      width: 75%;
+    }
+
+    .block {
+      height: 40%;
+      width: 90%;
+      max-width: 1000px;
+      margin: 20px;
+      padding: 20px;
+      border: 1px solid #ccc;
+      border-radius: 5px;
+    }
+
+    /* Tab Styles */
+    .tab-container {
+      width: 100%;
+      max-width: 1200px;
+      margin: 20px 0;
+    }
+
+    .tab-nav {
+      display: flex;
+      list-style: none;
+      padding: 0;
+      margin: 0;
+      border-bottom: 2px solid #ccc;
+      justify-content: center;
+    }
+
+    .tab-nav li {
+      margin-right: 10px;
+    }
+
+    .tab-btn {
+      background: #f8f9fa;
+      border: 1px solid #ccc;
+      border-bottom: none;
+      padding: 12px 24px;
+      font-family: "JetBrains Mono", monospace;
+      font-size: 16px;
+      cursor: pointer;
+      border-radius: 8px 8px 0 0;
+      transition: all 0.3s ease;
+      text-decoration: none;
+      color: #000;
+      display: inline-block;
+    }
+
+    .tab-btn:hover {
+      background: #e9ecef;
+      text-decoration: none;
+      color: #000;
+    }
+
+    .tab-btn.active {
+      background: #fff;
+      border-bottom: 2px solid #fff;
+      font-weight: bold;
+      color: #007bff;
+    }
+
+    .tab-content {
+      display: none;
+      padding: 20px 0;
+    }
+
+    .tab-content.active {
+      display: block;
+    }
+
+    @media screen and (max-width: 1400px) {
+      body {
+        font-size: 1.9vw;
+      }
+
+      #content {
+        width: 100%;
+      }
+
+      h1 {
+        font-size: 2em;
+      }
+
+      h2 {
+        font-size: 1.6em;
+      }
+
+      .tab-btn {
+        font-size: 14px;
+        padding: 10px 16px;
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <div class="container-fluid d-flex flex-column align-items-center gap-3">
+    <!-- Logo and Header -->
+    <h1 class="text-nowrap mt-5"><b>Benchmarks @ TraceEnhance</b></h1>
+
+    <!-- Tab Navigation -->
+    <div class="tab-container">
+      <ul class="tab-nav">
+        <li><button class="tab-btn active" data-tab="home-tab">🏠 Home</button></li>
+        <li><a href="leaderboard.html" class="tab-btn">📊 Leaderboard</a></li>
+        <li><a href="python_sandbox.html" class="tab-btn">🐍 Python Sandbox</a></li>
+      </ul>
+    </div>
+
+<div class="tab-content active" id="home-tab">
+
+ <div id="content" class="container-fluid d-flex flex-column align-items-center">
+
+   <div class="fs-5">
+
+     <p>
+
+       TraceEnhance team aims to build <i>comprehensive</i> and <i>systematic</i> evaluators to understand
+
+       LLM performance on code related tasks when enhanced with trace and boosted by various trace representations:
+
+     </p>
+
+   </div>
+
+   <div class="block">
+
+     <h2 class="d-flex flex-row justify-content-center gap-3 text-nowrap">
+
+       🔍 Code Semantics & Execution Traces
+
+     </h2>
+
+     <p>
+
+       Code LLMs struggle with runtime behavior reasoning and semantic information representation. Our comprehensive study explores how execution trace-based semantic information can enhance Code LLMs through supervised fine-tuning and post-phase inference, revealing surprising insights about the actual utility of semantic information in code understanding tasks.
+
+     </p>
+
+     <a class="d-flex flex-row justify-content-center gap-3 text-nowrap" href="leaderboard.html">Go to TraceEnhance Leaderboard</a>
+
+   </div>
+
+  
+
+ </div>
+
+</div>
+
+    <!-- Tab Content -->
+  </div>
+
+  <script>
+    // Tab switching functionality for home tab
+    function switchTab(tabId) {
+      // Hide all tab contents
+      const tabContents = document.querySelectorAll('.tab-content');
+      tabContents.forEach(content => content.classList.remove('active'));
+      
+      // Remove active class from all tab buttons
+      const tabButtons = document.querySelectorAll('.tab-btn');
+      tabButtons.forEach(btn => btn.classList.remove('active'));
+      
+      // Show selected tab content
+      const selectedTab = document.getElementById(tabId);
+      if (selectedTab) {
+        selectedTab.classList.add('active');
+      }
+      
+      // Add active class to clicked button
+      const activeButton = document.querySelector(`[data-tab="${tabId}"]`);
+      if (activeButton) {
+        activeButton.classList.add('active');
+      }
+    }
+
+    // Add click event listeners to tab buttons (only for home tab)
+    document.querySelectorAll('.tab-btn[data-tab]').forEach(button => {
+      button.addEventListener('click', () => {
+        const tabId = button.getAttribute('data-tab');
+        switchTab(tabId);
+      });
+    });
+  </script>
+</body>
+</html>
+

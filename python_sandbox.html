@@ -1,0 +1,998 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+   <meta charset="UTF-8">
+   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+   <title>Tracewise(EMNLP25) Sandbox - Collapsible Panels + Fixed Diff</title>
+
+   <!-- libs -->
+   <script src="https://cdnjs.cloudflare.com/ajax/libs/split.js/1.6.5/split.min.js"></script>
+   <script src="https://cdn.jsdelivr.net/npm/monaco-editor@0.49.0/min/vs/loader.js"></script>
+
+   <link rel="stylesheet" href="python_sandbox.css">
+
+</head>
+<body>
+<div class="container" id="mainContainer">
+
+   <!-- =============== HEADER ================= -->
+   <header class="header">
+       <div class="title">🐍 Python Sandbox</div>
+       <div class="api-config">
+           <label>API URL:</label>
+           <input type="text" class="api-url-input" id="apiUrl" value="http://146.190.90.3:9651" placeholder="http://146.190.90.3:9651">
+       </div>
+       <div class="controls">
+           <select class="model-select" id="modelSelect">
+               <option value="qwen3-14b">Qwen2.5-Code-7B-Inst.</option>
+               <option value="gpt-4" disabled>GPT-4</option>
+               <option value="claude-3.5" disabled>Claude 3.5 Sonnet</option>
+               <option value="gemini-pro" disabled>Gemini Pro</option>
+               <option value="fallback" disabled>Fallback Mode</option>
+           </select>
+           <button class="btn btn-primary" id="executeDebugBtn">🚀 Execute &amp; Debug</button>
+           <button class="btn btn-reset" id="resetBtn">🔄 Reset</button>
+       </div>
+   </header>
+
+   <!-- =============== MAIN CONTENT WITH RESIZABLE PANELS =============== -->
+   <div class="main-content">
+       <!-- Left Panel: Debug Iterations -->
+       <div class="left-panel">
+           <aside class="iterations-panel" id="iterationsPanel">
+               <div class="panel-header">Debug Iterations</div>
+               <div class="iterations-list" id="iterationsList">
+                   <div class="no-iterations">No debug iterations yet.<br><br>Click "Execute &amp; Debug" to start.</div>
+               </div>
+           </aside>
+       </div>
+
+       <!-- Right Panel: Code Editor + Diff + Console -->
+       <div class="right-panel">
+           <!-- Top Section: Code Editor + Diff Viewer -->
+       <div class="right-top" id="rightTop">
+           <!-- Code Editor -->
+           <div class="code-panel" id="codePanel">
+           <div class="panel-header">Code Editor</div>
+           <div class="editor-container"><div id="editor"></div></div>
+           </div>
+           
+           <!-- Right section for diff and execution (vertical split) -->
+           <div class="diff-execution-container" id="diffExecutionContainer">
+           <!-- Code Diff Viewer (top) -->
+           <div class="diff-panel" id="diffPanel">
+               <div class="panel-header">Code Diff Viewer (Inline)</div>
+               <div class="diff-container" id="diffContainer"><div class="no-diff">No changes yet.</div></div>
+           </div>
+           
+           <!-- Execution Output (bottom) -->
+           <div class="execution-panel" id="executionPanel">
+               <div class="panel-header">Execution Output</div>
+               <div class="execution-output" id="executionOutput"><div class="no-output">No execution results yet.</div></div>
+               </div>
+               </div>
+           </div>
+
+
+           <!-- Bottom Section: Console -->
+           <div class="bottom-panel">
+               <section class="console-container" id="consolePanel">
+                   <div class="panel-header">Console Output</div>
+                   <div class="console-output-wrapper"><div class="console-output" id="consoleOutput">Ready…</div></div>
+                   <div class="status-bar">
+                       <div class="status-indicator"><div class="status-dot" id="statusDot"></div><span id="statusText">Ready</span></div>
+                       <div id="debugInfo">Model: <span id="currentModel">Qwen3-14B</span> | Iterations: <span id="iterationCount">0</span></div>
+                   </div>
+               </section>
+           </div>
+       </div>
+   </div>
+</div>
+
+<script>
+
+let diffEditor, editor;
+let currentProblemId = null; // Add global variable to store current problem ID
+
+/* ------------ MONACO LOAD -------------- */
+require.config({ paths: { vs: 'https://cdn.jsdelivr.net/npm/monaco-editor@0.49.0/min/vs' }});
+require(['vs/editor/editor.main'], () => {
+   // Create main code editor
+   editor = monaco.editor.create(document.getElementById('editor'), {
+       value: `# Loading initial problem...\n# Please wait while we fetch your first coding challenge`,
+       language: 'python', 
+       theme: 'vs-dark', 
+       automaticLayout: true,
+       fontSize: 14, 
+       minimap: { enabled: false }, 
+       wordWrap: 'on'
+   });
+
+   // Get the diff container element
+   const diffContainer = document.getElementById('diffContainer');
+   
+   // Create diff editor with inline view (uni-diff style)
+   diffEditor = monaco.editor.createDiffEditor(diffContainer, {
+       theme: 'vs-dark', 
+       automaticLayout: true, 
+       fontSize: 12, 
+       renderSideBySide: false, // Inline diff view
+       readOnly: true,
+       enableSplitViewResizing: false,
+       renderLineHighlight: 'none',
+       minimap: {
+           enabled: true
+       },
+       scrollBeyondLastLine: false,
+       wordWrap: 'on',
+       diffCodeLens: true,
+       ignoreTrimWhitespace: false,
+       renderOverviewRuler: true
+   });
+
+   // Add resize observer for diff editor
+   const resizeObserver = new ResizeObserver(() => {
+       diffEditor.layout();
+       editor.layout();
+   });
+   resizeObserver.observe(diffContainer);
+
+   initializeApp();
+});
+
+/* ------------ APP CORE -------------- */
+function initializeApp() {
+   let originalCode = '', currentCode = '', isDebugging = false;
+   let debugIterations = 0, iterations = [], selectedIteration = null;
+   const maxDebugIterations = 4; // Budget limit for debugging attempts
+   let debugBudgetRemaining = maxDebugIterations;
+   const defaultCode = `# Hello World Default Code\nprint("Hello, World!")`;
+
+   /* ======= Helper Functions ======= */
+   const updateStatus = (cls, msg) => { 
+       document.getElementById('statusDot').className = 'status-dot ' + cls; 
+       document.getElementById('statusText').textContent = msg; 
+   };
+
+   const scrollConsoleToBottom = () => { 
+       const el = document.getElementById('consoleOutput'); 
+       el.scrollTop = el.scrollHeight; 
+   };
+
+   const updateDebugBudgetDisplay = () => {
+       const budgetElement = document.getElementById('debugBudget');
+       if (budgetElement) {
+           budgetElement.textContent = `Debug Budget: ${debugBudgetRemaining}/${maxDebugIterations}`;
+           
+           // Update button text to show remaining attempts
+           const executeBtn = document.getElementById('executeDebugBtn');
+           if (!isDebugging) {
+               executeBtn.textContent = `🚀 Execute & Debug (${debugBudgetRemaining} attempts left)`;
+           }
+       }
+   };
+
+const collapsePanels = (collapse) => {
+   const codePanel = document.getElementById('codePanel');
+   const diffPanel = document.getElementById('diffPanel');
+   const executionPanel = document.getElementById('executionPanel');
+   
+   if (collapse) {
+       codePanel.classList.add('collapsed');
+       diffPanel.classList.add('collapsed');
+       executionPanel.classList.add('collapsed');
+   } else {
+       codePanel.classList.remove('collapsed');
+       diffPanel.classList.remove('collapsed');
+       executionPanel.classList.remove('collapsed');
+   }
+   
+   setTimeout(() => { 
+       editor?.layout(); 
+       diffEditor?.layout(); 
+   }, 10);
+};
+
+
+// Update showPanels function:
+const showPanels = () => {
+   document.getElementById('codePanel').classList.remove('collapsed');
+   document.getElementById('diffPanel').classList.remove('collapsed');
+   document.getElementById('executionPanel').classList.remove('collapsed');
+   setTimeout(() => { 
+       editor?.layout(); 
+       diffEditor?.layout(); 
+   }, 10);
+};
+
+
+const updateExecutionOutput = (content) => {
+   const executionOutput = document.getElementById('executionOutput');
+   executionOutput.innerHTML = `<pre style="margin: 0; padding: 8px; font-family: 'Consolas', 'Monaco', monospace; font-size: 12px; line-height: 1.4; white-space: pre-wrap; word-wrap: break-word;">${content}</pre>`;
+   executionOutput.scrollTop = executionOutput.scrollHeight;
+};
+
+
+   const showDiff = (original, modified) => {
+       try {
+           const diffContainer = document.getElementById('diffContainer');
+           
+           if (!original || !modified) {
+               diffContainer.innerHTML = '<div class="no-diff">No changes to display.</div>';
+               return;
+           }
+           
+           if (!diffEditor) {
+               console.error('Diff editor not initialized');
+               diffContainer.innerHTML = '<div class="no-diff">Diff editor not initialized.</div>';
+               return;
+           }
+           
+           // Clear the container's inner HTML if showing "no diff" message
+           if (diffContainer.querySelector('.no-diff')) {
+               diffContainer.innerHTML = '';
+               // Re-create the diff editor container
+               const editorDiv = document.createElement('div');
+               editorDiv.style.width = '100%';
+               editorDiv.style.height = '100%';
+               diffContainer.appendChild(editorDiv);
+               
+               // Re-create diff editor
+               diffEditor = monaco.editor.createDiffEditor(editorDiv, {
+                   theme: 'vs-dark', 
+                   automaticLayout: true, 
+                   fontSize: 12, 
+                   renderSideBySide: false,
+                   readOnly: true,
+                   enableSplitViewResizing: false,
+                   renderLineHighlight: 'none',
+                   minimap: { enabled: true },
+                   scrollBeyondLastLine: false,
+                   wordWrap: 'on',
+                   diffCodeLens: true,
+                   ignoreTrimWhitespace: false,
+                   renderOverviewRuler: true
+               });
+           }
+           
+           // Create new models
+           const originalModel = monaco.editor.createModel(original, 'python');
+           const modifiedModel = monaco.editor.createModel(modified, 'python');
+           
+           // Set the models
+           diffEditor.setModel({ 
+               original: originalModel, 
+               modified: modifiedModel 
+           });
+           
+           // Force layout update
+           setTimeout(() => {
+               diffEditor.layout();
+           }, 50);
+           
+           console.log('Diff updated successfully with inline view');
+       } catch (error) {
+           console.error('Error updating diff:', error);
+           document.getElementById('diffContainer').innerHTML = '<div class="no-diff">Error showing diff</div>';
+       }
+   };
+
+   const applyNewCode = (original, fixed) => {
+       currentCode = fixed;
+       editor.setValue(fixed);
+       showDiff(original, fixed);
+   };
+
+   const formatAsComments = (text) => {
+       if (!text) return '';
+       
+       const lines = text.split('\n');
+       const commentedLines = lines.map(line => line.trim() ? `# ${line}` : '#');
+       
+       commentedLines.unshift('# ' + '='.repeat(78));
+       commentedLines.unshift('# PROBLEM DESCRIPTION:');
+       commentedLines.push('# ' + '='.repeat(78));
+       
+       return commentedLines.join('\n');
+   };
+
+const resetDebugState = () => {
+   isDebugging = false;
+   debugIterations = 0;
+   debugBudgetRemaining = maxDebugIterations; // Reset debug budget
+   iterations = [];
+   selectedIteration = null;
+   updateIterationsList();
+   updateDebugBudgetDisplay();
+   
+   const executeBtn = document.getElementById('executeDebugBtn');
+   executeBtn.textContent = `🚀 Execute & Debug (${debugBudgetRemaining} attempts left)`;
+   executeBtn.classList.remove('btn-secondary');
+   executeBtn.classList.add('btn-primary');
+   
+   document.getElementById('iterationCount').textContent = '0';
+   
+   // Clear diff editor
+   const diffContainer = document.getElementById('diffContainer');
+   diffContainer.innerHTML = '<div class="no-diff">No changes yet.</div>';
+   
+   document.getElementById('executionOutput').innerHTML = '<div class="no-output">No execution results yet.</div>';
+   showPanels();
+};
+
+   // Initialize Split.js for resizable panels
+   initializeSplitPanes();
+
+   // Load initial problem on startup
+   loadInitialProblem();
+
+   /* ======= Split Panes Setup ======= */
+
+function initializeSplitPanes() {
+   // Check if Split.js is loaded
+   if (typeof Split === 'undefined') {
+       console.log('Waiting for Split.js to load...');
+       setTimeout(initializeSplitPanes, 100);
+       return;
+   }
+   
+   try {
+       // Main horizontal split: Debug Iterations | (Code Editor + Diff + Execution + Console)
+       Split(['.left-panel', '.right-panel'], {
+           sizes: [20, 80],
+           minSize: [300, 300],
+           gutterSize: 6,
+           cursor: 'col-resize',
+           onDragEnd: () => {
+               setTimeout(() => {
+                   editor?.layout();
+                   diffEditor?.layout();
+               }, 100);
+           }
+       });
+
+       // Right panel vertical split: (Code Editor + Diff + Execution) | Console
+       Split(['.right-top', '.bottom-panel'], {
+           direction: 'vertical',
+           sizes: [70, 30],
+           minSize: [200, 150],
+           gutterSize: 6,
+           cursor: 'row-resize',
+           onDragEnd: () => {
+               setTimeout(() => {
+                   editor?.layout();
+                   diffEditor?.layout();
+               }, 100);
+           }
+       });
+
+       // Top right horizontal split: Code Editor | Diff + Execution container
+       Split(['#codePanel', '#diffExecutionContainer'], {
+           sizes: [60, 40],
+           minSize: [200, 200],
+           gutterSize: 6,
+           cursor: 'col-resize',
+           onDragEnd: () => {
+               setTimeout(() => {
+                   editor?.layout();
+                   diffEditor?.layout();
+               }, 100);
+           }
+       });
+
+       // Split the diff and execution panels vertically
+       Split(['#diffPanel', '#executionPanel'], {
+           direction: 'vertical',
+           sizes: [50, 50],
+           minSize: [100, 100],
+           gutterSize: 6,
+           cursor: 'row-resize',
+           onDragEnd: () => {
+               setTimeout(() => {
+                   diffEditor?.layout();
+               }, 100);
+           }
+       });
+       
+       console.log('Split.js initialized successfully');
+       
+   } catch (error) {
+       console.error('Error initializing Split.js:', error);
+       console.log('Continuing without resizable panels');
+   }
+}
+
+   /* ======= INITIAL PROBLEM LOAD ======= */
+   function loadInitialProblem() {
+       updateStatus('processing', 'Loading initial problem...');
+       const consoleOutput = document.getElementById('consoleOutput');
+       consoleOutput.textContent = '> Loading your first coding challenge...';
+       scrollConsoleToBottom();
+       
+       const apiUrl = document.getElementById('apiUrl').value || 'http://localhost:5000';
+       
+       fetch(`${apiUrl}/reset`)
+           .then(response => response.json())
+           .then(res => {
+               let newCode = defaultCode;
+               let problemInfo = '';
+               
+               try {
+                   if (res && res.status === 'success') {
+                       // Store the problem ID globally
+                       currentProblemId = res.problem.question_id || null;
+                       
+                       const questionComment = formatAsComments(res.problem.question_content || '');
+                       newCode = questionComment + '\n\n' + (res.code || '');
+                       
+                       problemInfo = `\n\n=== Initial Problem Loaded ===\n` +
+                                    `Title: ${res.problem.question_title || 'N/A'}\n` +
+                                    `Platform: ${res.problem.platform || 'N/A'}\n` +
+                                    `ID: ${res.problem.question_id || 'N/A'}\n` +
+                                    `Difficulty: ${res.problem.difficulty || 'N/A'}\n`;
+                       
+                       console.log('Initial Problem ID set to:', currentProblemId);
+                   }
+               } catch (parseError) {
+                   console.warn('Initial load response parsing error:', parseError);
+                   consoleOutput.textContent += '\n> Warning: Response parsing issue, using default code';
+                   currentProblemId = null;
+               }
+               
+               editor.setValue(newCode);
+               consoleOutput.textContent += '\n> Initial problem loaded successfully';
+               consoleOutput.textContent += problemInfo;
+               consoleOutput.textContent += '\n> Ready to start coding! Click "Execute & Debug" when ready.';
+               updateStatus('ready', 'Ready');
+               
+               resetDebugState();
+               scrollConsoleToBottom();
+           })
+           .catch(error => {
+               consoleOutput.textContent += `\n> Initial load failed: ${error.message || 'Unknown error'}`;
+               consoleOutput.textContent += '\n> Using default "Hello World" code';
+               consoleOutput.textContent += '\n> You can click "New Problem" to try loading a problem again.';
+               
+               editor.setValue(defaultCode);
+               updateStatus('ready', 'Ready (fallback)');
+               currentProblemId = null;
+               
+               resetDebugState();
+               scrollConsoleToBottom();
+           });
+   }
+
+   /* ======= UI Event Handlers ======= */
+   document.getElementById('modelSelect').addEventListener('change', () => {
+       const selectedText = document.getElementById('modelSelect').selectedOptions[0].text;
+       // You can add current model display if needed
+   });
+
+   document.getElementById('executeDebugBtn').addEventListener('click', () => {
+       if (isDebugging) {
+           stopDebugging();
+       } else {
+           executeAndDebug();
+       }
+   });
+
+   document.getElementById('resetBtn').addEventListener('click', resetCode);
+
+   /* ======= RESET FUNCTIONALITY ======= */
+
+function resetCode() {
+   updateStatus('processing', 'Loading new problem...');
+   const consoleOutput = document.getElementById('consoleOutput');
+   const executionOutput = document.getElementById('executionOutput');
+   
+   // Clear both outputs at the start of reset
+   consoleOutput.textContent = '> Fetching new problem...';
+   executionOutput.innerHTML = '<div class="no-output">No execution results yet.</div>';
+   scrollConsoleToBottom();
+   
+   const apiUrl = document.getElementById('apiUrl').value || 'http://localhost:5000';
+   
+   fetch(`${apiUrl}/reset`)
+       .then(response => response.json())
+       .then(res => {
+           let newCode = defaultCode;
+           let problemInfo = '';
+           
+           try {
+               if (res && res.status === 'success') {
+                   // Store the problem ID globally
+                   currentProblemId = res.problem.question_id || null;
+                   
+                   const questionComment = formatAsComments(res.problem.question_content || '');
+                   newCode = questionComment + '\n\n' + (res.code || '');
+                   
+                   problemInfo = `\n\n=== New Problem ===\n` +
+                                `Title: ${res.problem.question_title || 'N/A'}\n` +
+                                `Platform: ${res.problem.platform || 'N/A'}\n` +
+                                `ID: ${res.problem.question_id || 'N/A'}\n` +
+                                `Difficulty: ${res.problem.difficulty || 'N/A'}\n`;
+                   
+                   console.log('Current Problem ID set to:', currentProblemId);
+               }
+           } catch (parseError) {
+               console.warn('Reset response parsing error:', parseError);
+               consoleOutput.textContent += '\n> Warning: Response parsing issue, using default code';
+               currentProblemId = null;
+           }
+           
+           editor.setValue(newCode);
+           consoleOutput.textContent += '\n> New problem loaded successfully';
+           consoleOutput.textContent += problemInfo;
+           updateStatus('ready', 'Ready');
+           
+           resetDebugState();
+           scrollConsoleToBottom();
+       })
+       .catch(error => {
+           consoleOutput.textContent += `\n> Reset failed: ${error.message || 'Unknown error'}`;
+           consoleOutput.textContent += '\n> Using default "Hello World" code';
+           
+           editor.setValue(defaultCode);
+           updateStatus('ready', 'Ready (fallback)');
+           currentProblemId = null;
+           
+           resetDebugState();
+           scrollConsoleToBottom();
+       });
+}
+
+   /* ======= DEBUG FLOW WITH BUDGET SYSTEM ======= */
+   function executeAndDebug() {
+       isDebugging = true;
+       originalCode = editor.getValue();
+       currentCode = originalCode;
+       debugIterations = 0;
+       iterations = [];
+       updateIterationsList();
+       
+       const executeBtn = document.getElementById('executeDebugBtn');
+       executeBtn.textContent = '🛑 Stop Debugging';
+       executeBtn.classList.remove('btn-primary');
+       executeBtn.classList.add('btn-secondary');
+       
+       updateStatus('processing', 'Executing…');
+       updateDebugBudgetDisplay();
+       collapsePanels(true);
+       executeCode(currentCode);
+   }
+
+   function stopDebugging() {
+       isDebugging = false;
+       
+       const executeBtn = document.getElementById('executeDebugBtn');
+       executeBtn.textContent = `🚀 Execute & Debug (${debugBudgetRemaining} attempts left)`;
+       executeBtn.classList.remove('btn-secondary');
+       executeBtn.classList.add('btn-primary');
+       
+       updateStatus('ready', 'Ready');
+       collapsePanels(false);
+   }
+
+   /* ----------- UPDATED EXECUTE CODE FUNCTION ------------ */
+   function executeCode(code) {
+       updateStatus('processing', 'Executing…');
+       const consoleOutput = document.getElementById('consoleOutput');
+       consoleOutput.textContent += '\n> Sending code for execution...';
+       
+       // Check if we have a problem ID
+       if (!currentProblemId) {
+           consoleOutput.textContent += '\n> Warning: No problem ID available, running without tests';
+       } else {
+           consoleOutput.textContent += `\n> Running tests for problem ID: ${currentProblemId}`;
+       }
+       
+       scrollConsoleToBottom();
+       
+       const apiUrl = document.getElementById('apiUrl').value || 'http://localhost:5000';
+
+       // Prepare request body - include task_id if available
+       const requestBody = { code };
+       if (currentProblemId) {
+           requestBody.task_id = currentProblemId;
+       }
+
+       fetch(`${apiUrl}/execute_py`, {
+           method: 'POST',
+           headers: { 'Content-Type': 'application/json' },
+           body: JSON.stringify(requestBody)
+       })
+       .then(response => response.json())
+       .then(res => {
+           console.log('Execute response:', res); // Debug log
+           
+           let executionContent = '';
+           
+           if (res.status === 'error') {
+               executionContent = `=== EXECUTION ERROR ===\nERROR: ${res.stderr}`;
+               if (res.message) {
+                   executionContent += `\nMessage: ${res.message}`;
+               }
+               
+               consoleOutput.textContent += `\nERROR: ${res.stderr}`;
+               if (res.message) {
+                   consoleOutput.textContent += `\nMessage: ${res.message}`;
+               }
+               scrollConsoleToBottom();
+               
+               if (isDebugging && debugBudgetRemaining > 0) {
+                   startDebugIteration(code, res.stderr);
+               } else if (isDebugging && debugBudgetRemaining === 0) {
+                   consoleOutput.textContent += '\n> Debug budget exhausted! No more automatic fixes available.';
+                   consoleOutput.textContent += '\n> You can manually edit the code or click "New Problem" for a fresh start.';
+                   scrollConsoleToBottom();
+                   updateStatus('error', 'Debug budget exhausted');
+                   stopDebugging();
+               } else {
+                   updateStatus('error', 'Run error');
+               }
+           } else if (res.status === 'test_failed') {
+               // Handle test failure case
+               executionContent = '=== TEST RESULTS ===\n';
+               executionContent += `Test Status: FAILED\n`;
+               executionContent += `Test Case: ${res.test_case || 'N/A'}\n`;
+               executionContent += `Test Result: ${res.test_result || 'N/A'}\n`;
+               
+               if (res.error_messages && res.error_messages.length > 0) {
+                   executionContent += `Error Messages: ${res.error_messages.join(', ')}\n`;
+               }
+               
+               if (res.output_values && res.output_values.length > 0) {
+                   executionContent += `Output: ${res.output_values.join(', ')}\n`;
+               }
+               
+               consoleOutput.textContent += '\n=== TEST RESULTS ===';
+               consoleOutput.textContent += `\nTest Status: FAILED`;
+               consoleOutput.textContent += `\nTest Case: ${res.test_case || 'N/A'}`;
+               consoleOutput.textContent += `\nTest Result: ${res.test_result || 'N/A'}`;
+               
+               if (res.error_messages && res.error_messages.length > 0) {
+                   consoleOutput.textContent += `\nError Messages: ${res.error_messages.join(', ')}`;
+               }
+               
+               if (res.output_values && res.output_values.length > 0) {
+                   consoleOutput.textContent += `\nOutput: ${res.output_values.join(', ')}`;
+               }
+               
+               scrollConsoleToBottom();
+               
+               if (isDebugging && debugBudgetRemaining > 0) {
+                   // Use test failure information for debugging
+                   const debugMessage = `Test failed: ${res.test_result}\nError: ${res.error_messages ? res.error_messages.join(', ') : 'Test case failed'}`;
+                   startDebugIteration(code, debugMessage);
+               } else if (isDebugging && debugBudgetRemaining === 0) {
+                   consoleOutput.textContent += '\n> Debug budget exhausted! No more automatic fixes available.';
+                   consoleOutput.textContent += '\n> You can manually edit the code or click "New Problem" for a fresh start.';
+                   scrollConsoleToBottom();
+                   updateStatus('error', 'Debug budget exhausted');
+                   stopDebugging();
+               } else {
+                   updateStatus('error', 'Test failed');
+               }
+           } else if (res.status === 'success') {
+               // Handle success case
+               executionContent = '=== TEST RESULTS ===\n';
+               executionContent += `Test Status: PASSED ✅\n`;
+               
+               if (res.passed !== undefined) {
+                   executionContent += `All Tests Passed: ${res.passed}\n`;
+               }
+               
+               if (res.output_values && res.output_values.length > 0) {
+                   executionContent += `Output: ${res.output_values.join(', ')}\n`;
+               }
+               
+               if (res.stdout) {
+                   executionContent += `${res.stdout}\n`;
+               } else {
+                   executionContent += 'Execution completed successfully!\n';
+               }
+               
+               consoleOutput.textContent += '\n=== TEST RESULTS ===';
+               consoleOutput.textContent += `\nTest Status: PASSED ✅`;
+               
+               if (res.passed !== undefined) {
+                   consoleOutput.textContent += `\nAll Tests Passed: ${res.passed}`;
+               }
+               
+               if (res.output_values && res.output_values.length > 0) {
+                   consoleOutput.textContent += `\nOutput: ${res.output_values.join(', ')}`;
+               }
+               
+               if (res.stdout) {
+                   consoleOutput.textContent += `\n${res.stdout}`;
+               } else {
+                   consoleOutput.textContent += '\nExecution completed successfully!';
+               }
+               
+               // Show success message with debug stats
+               if (debugIterations > 0) {
+                   consoleOutput.textContent += `\n🎉 Problem solved after ${debugIterations} debug iterations!`;
+                   consoleOutput.textContent += `\n📊 Debug budget used: ${debugIterations}/${maxDebugIterations}`;
+               }
+               
+               scrollConsoleToBottom();
+               updateStatus('ready', 'Tests passed!');
+               stopDebugging();
+           } else {
+               // Fallback for other statuses
+               executionContent = '=== EXECUTION RESULT ===\n';
+               executionContent += `${res.stdout || res.message || 'Done.'}\n`;
+               
+               consoleOutput.textContent += `\n${res.stdout || res.message || 'Done.'}`;
+               scrollConsoleToBottom();
+               updateStatus('ready', 'Run ok');
+               stopDebugging();
+           }
+           
+           // Update execution output panel
+           updateExecutionOutput(executionContent);
+       })
+       .catch(error => {
+           const errorContent = `=== CONNECTION ERROR ===\nConnection Error: ${error.message}`;
+           updateExecutionOutput(errorContent);
+           
+           consoleOutput.textContent += `\nConnection Error: ${error.message}`;
+           scrollConsoleToBottom();
+           updateStatus('error', 'Connection failed');
+           stopDebugging();
+       });
+   }
+
+   async function startDebugIteration(originalCode, errorMessage) {
+   // Check budget before starting debug iteration
+   if (debugBudgetRemaining <= 0) {
+       const consoleOutput = document.getElementById('consoleOutput');
+       consoleOutput.textContent += '\n> Debug budget exhausted! Cannot perform more automatic fixes.';
+       scrollConsoleToBottom();
+       updateStatus('error', 'Debug budget exhausted');
+       stopDebugging();
+       return;
+   }
+
+   debugIterations++;
+   debugBudgetRemaining--; // Consume budget
+   document.getElementById('iterationCount').textContent = debugIterations;
+   updateStatus('processing', `Debug step ${debugIterations}/${maxDebugIterations}`);
+   updateDebugBudgetDisplay();
+
+   showPanels();
+
+   const iteration = {
+       id: debugIterations,
+       title: `Iteration ${debugIterations}`,
+       status: 'processing',
+       description: 'AI analyzing and fixing code…',
+       timestamp: new Date().toLocaleTimeString(),
+       originalCode: originalCode
+   };
+   iterations.push(iteration);
+   updateIterationsList();
+
+
+const apiUrl = document.getElementById('apiUrl').value || 'http://localhost:5000';
+   const modelValue = document.getElementById('modelSelect').value;
+
+   try {
+       const response = await fetch(`${apiUrl}/fix_code_stream`, {
+           method: 'POST',
+           headers: { 'Content-Type': 'application/json' },
+           body: JSON.stringify({ 
+               code: originalCode, 
+               feedback: errorMessage, 
+               model: modelValue 
+           })
+       });
+
+       if (!response.ok) {
+           iteration.status = 'error';
+           iteration.description = 'Stream request failed';
+           updateIterationsList();
+           
+           // Check if we have budget left for more attempts
+           if (debugBudgetRemaining === 0) {
+               const consoleOutput = document.getElementById('consoleOutput');
+               consoleOutput.textContent += '\n> Debug budget exhausted after failed attempt.';
+               scrollConsoleToBottom();
+               updateStatus('error', 'Debug budget exhausted');
+           }
+           stopDebugging();
+           return;
+       }
+
+       const reader = response.body.getReader();
+       const decoder = new TextDecoder();
+       let fullText = '';
+       const consoleOutput = document.getElementById('consoleOutput');
+
+       consoleOutput.textContent += `\n> AI Debug Attempt ${debugIterations}/${maxDebugIterations}:`;
+       scrollConsoleToBottom();
+
+       while (true) {
+           const { value, done } = await reader.read();
+           if (done) break;
+
+           const chunk = decoder.decode(value, { stream: true });
+           fullText += chunk;
+           consoleOutput.textContent += chunk;
+           scrollConsoleToBottom();
+       }
+
+       // Parse the streaming response for fixed code
+       const parsedResult = parseStreamResponse(fullText);
+       
+       if (parsedResult && parsedResult.fixed_code) {
+           const fixedCode = parsedResult.fixed_code.trim();
+           if (fixedCode.length > 0) {
+               iteration.status = 'success';
+               iteration.description = 'Code fixed successfully';
+               iteration.fixedCode = fixedCode;
+               
+               // Show diff between iterations (this will now work properly)
+               showDiff(originalCode, fixedCode);
+               
+               applyNewCode(originalCode, fixedCode);
+               updateIterationsList();
+               
+               // Continue debugging if we have budget and haven't exceeded max iterations
+               if (debugBudgetRemaining > 0) {
+                   consoleOutput.textContent += `\n> Testing fixed code... (${debugBudgetRemaining} attempts remaining)`;
+                   scrollConsoleToBottom();
+                   executeCode(fixedCode);
+               } else {
+                   consoleOutput.textContent += '\n> Debug budget exhausted! This was the final attempt.';
+                   scrollConsoleToBottom();
+                   updateStatus('ready', 'Debug budget exhausted');
+                   stopDebugging();
+               }
+               return;
+           }
+       }
+
+       iteration.status = 'error';
+       iteration.description = 'No valid fix found in response';
+       updateIterationsList();
+       
+       // Check if we have budget for more attempts
+       if (debugBudgetRemaining === 0) {
+           const consoleOutput = document.getElementById('consoleOutput');
+           consoleOutput.textContent += '\n> Debug budget exhausted! No more automatic fixes available.';
+           scrollConsoleToBottom();
+           updateStatus('error', 'Debug budget exhausted');
+       }
+       stopDebugging();
+
+   } catch (error) {
+       console.error('Debug iteration error:', error);
+       iteration.status = 'error';
+       iteration.description = 'Error: ' + error.message;
+       updateIterationsList();
+       
+       if (debugBudgetRemaining === 0) {
+           const consoleOutput = document.getElementById('consoleOutput');
+           consoleOutput.textContent += '\n> Debug budget exhausted after error.';
+           scrollConsoleToBottom();
+           updateStatus('error', 'Debug budget exhausted');
+       }
+       stopDebugging();
+   }
+}
+
+   function parseStreamResponse(fullText) {
+       // Look for the structured response format
+       const fixedCodeMatch = fullText.match(/<fixed_code>([\s\S]*?)<\/fixed_code>/);
+       const explanationMatch = fullText.match(/<explanation>([\s\S]*?)<\/explanation>/);
+       const changesMatch = fullText.match(/<changes_made>([\s\S]*?)<\/changes_made>/);
+       
+       if (fixedCodeMatch) {
+           let fixedCode = fixedCodeMatch[1].trim();
+           
+           // Remove triple backticks if present
+           if (fixedCode.startsWith('```python')) {
+               fixedCode = fixedCode.replace(/^```python\n?/, '').replace(/```$/, '').trim();
+           } else if (fixedCode.startsWith('```')) {
+               fixedCode = fixedCode.replace(/^```\n?/, '').replace(/```$/, '').trim();
+           }
+           
+           return {
+               fixed_code: fixedCode,
+               explanation: explanationMatch ? explanationMatch[1].trim() : '',
+               changes_made: changesMatch ? changesMatch[1].trim().split('\n').map(line => line.trim().replace(/^[-•]\s*/, '')) : []
+           };
+       }
+       
+
+       // Fallback: try to find JSON in the response
+       try {
+           const jsonMatch = fullText.match(/\{[\s\S]*?\}/);
+           if (jsonMatch) {
+               const parsed = JSON.parse(jsonMatch[0]);
+               // Also clean backticks from JSON response
+               if (parsed.fixed_code) {
+                   let fixedCode = parsed.fixed_code.trim();
+                   if (fixedCode.startsWith('```python')) {
+                       fixedCode = fixedCode.replace(/^```python\n?/, '').replace(/```$/, '').trim();
+                   } else if (fixedCode.startsWith('```')) {
+                       fixedCode = fixedCode.replace(/^```\n?/, '').replace(/```$/, '').trim();
+                   }
+                   parsed.fixed_code = fixedCode;
+               }
+               return parsed;
+           }
+       } catch (e) {
+           console.warn('JSON parsing failed:', e);
+       }
+       
+       return null;
+   }
+
+   /* -------- Iterations List UI -------- */
+   function updateIterationsList() {
+       const iterationsList = document.getElementById('iterationsList');
+       
+       if (!iterations.length) {
+           iterationsList.innerHTML = '<div class="no-iterations">No debug iterations yet.</div>';
+           return;
+       }
+
+       let html = '';
+       iterations.forEach(iteration => {
+           const active = iteration.id === selectedIteration ? 'active' : '';
+           const budgetInfo = debugBudgetRemaining < maxDebugIterations ? 
+               `<div style="font-size:0.65em;color:#f85149;margin-top:2px;">Budget: ${maxDebugIterations - iteration.id + 1}/${maxDebugIterations} remaining after this</div>` : '';
+           
+           html += `
+               <div class="iteration-item ${active}" data-id="${iteration.id}">
+                   <div class="iteration-header">
+                       <span class="iteration-title">${iteration.title}</span>
+                       <span class="iteration-status ${iteration.status}">${iteration.status}</span>
+                   </div>
+                   <div class="iteration-description">${iteration.description}</div>
+                   <div style="font-size:0.7em;color:#6e7681;margin-top:4px;">${iteration.timestamp}</div>
+                   ${budgetInfo}
+               </div>
+           `;
+       });
+
+       iterationsList.innerHTML = html;
+
+       // Add click event listeners
+       document.querySelectorAll('.iteration-item').forEach(item => {
+           item.addEventListener('click', function() {
+               const id = parseInt(this.dataset.id);
+               selectIteration(id);
+           });
+       });
+   }
+
+   function selectIteration(id) {
+       selectedIteration = id;
+       
+       document.querySelectorAll('.iteration-item').forEach(item => {
+           item.classList.remove('active');
+       });
+       
+       const selectedItem = document.querySelector(`.iteration-item[data-id="${id}"]`);
+       if (selectedItem) {
+           selectedItem.classList.add('active');
+       }
+
+       const iteration = iterations.find(it => it.id === id);
+       if (iteration && iteration.fixedCode) {
+           applyNewCode(iteration.originalCode, iteration.fixedCode);
+           showPanels();
+       }
+   }
+
+   /* Initialize */
+   updateStatus('loading', 'Initializing...');
+   updateDebugBudgetDisplay();
+}
+
+</script>
+</body>
+</html>

@@ -3,644 +3,458 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Code Generation Research Results</title>
+    <title>Interactive Code Generation Leaderboard</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@100;400&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.0/dist/css/bootstrap.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@100;400;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     
-    <style>
-        body {
-            font-family: "JetBrains Mono", monospace;
-            background-color: #ffffff;
-            color: #000000;
-            line-height: 1.4;
-        }
+    <link rel="stylesheet" href="./leaderboard.css">
 
-        #content {
-            width: 90%;
-            max-width: 1400px;
-        }
-
-        .table-container {
-            background: #f8f9fa;
-            border-radius: 12px;
-            padding: 25px;
-            margin: 30px 0;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
-            border: 2px solid #e9ecef;
-        }
-
-        .table-title {
-            font-size: 1.4em;
-            font-weight: 600;
-            color: #2c3e50;
-            margin-bottom: 20px;
-            text-align: center;
-            padding: 15px;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            border-radius: 8px;
-            text-shadow: 1px 1px 2px rgba(0,0,0,0.2);
-        }
-
-        .table {
-            background: white;
-            border-radius: 8px;
-            overflow: hidden;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-            font-size: 0.9em;
-        }
-
-        .table th {
-            background: linear-gradient(135deg, #34495e, #2c3e50);
-            color: white;
-            font-weight: 600;
-            text-align: center;
-            vertical-align: middle;
-            border: none;
-            padding: 12px 8px;
-            font-size: 0.85em;
-        }
-
-        .table td {
-            text-align: center;
-            vertical-align: middle;
-            padding: 10px 8px;
-            border-color: #e9ecef;
-        }
-
-        .table tbody tr:hover {
-            background-color: #f1f3f4;
-            transition: background-color 0.2s ease;
-        }
-
-        .model-name {
-            font-weight: 500;
-            text-align: left !important;
-            color: #2c3e50;
-        }
-
-        .checkmark {
-            color: #28a745;
-            font-weight: bold;
-            font-size: 1.2em;
-        }
-
-        .xmark {
-            color: #dc3545;
-            font-weight: bold;
-            font-size: 1.2em;
-        }
-
-        .best-score {
-            background-color: #d4edda;
-            font-weight: 600;
-            color: #155724;
-        }
-
-        .section-divider {
-            border-top: 3px solid #dee2e6;
-            font-style: italic;
-            background-color: #f8f9fa;
-            font-weight: 500;
-        }
-
-        .header-group {
-            background: linear-gradient(135deg, #667eea, #764ba2);
-            color: white;
-            font-weight: 600;
-        }
-
-        .metric-header {
-            background: linear-gradient(135deg, #3498db, #2980b9);
-            color: white;
-        }
-
-        h1 {
-            font-size: 2.5em;
-            font-weight: 600;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            text-align: center;
-            margin: 40px 0;
-        }
-
-        .subtitle {
-            text-align: center;
-            color: #6c757d;
-            font-size: 1.1em;
-            margin-bottom: 40px;
-            font-weight: 300;
-        }
-
-        @media screen and (max-width: 1200px) {
-            body {
-                font-size: 14px;
-            }
-            
-            #content {
-                width: 95%;
-            }
-            
-            .table {
-                font-size: 0.8em;
-            }
-            
-            .table th,
-            .table td {
-                padding: 6px 4px;
-            }
-            
-            h1 {
-                font-size: 2em;
-            }
-        }
-
-        @media screen and (max-width: 768px) {
-            .table-container {
-                padding: 15px;
-                margin: 20px 0;
-            }
-            
-            .table {
-                font-size: 0.7em;
-            }
-            
-            .table th,
-            .table td {
-                padding: 4px 2px;
-            }
-        }
-    </style>
 </head>
 
+
+
 <body>
-    <div id="content" class="container-fluid d-flex flex-column align-items-center">
-        <h1>🔬 Code Generation Research Results 🔬</h1>
-        <p class="subtitle">Comprehensive evaluation of semantic information in code generation models across multiple tasks and benchmarks</p>
-
-        <!-- Table 1: Full-Parameter Fine-tuning Results -->
-        <div class="table-container">
-            <div class="table-title">
-                Table 1: Full-Parameter Fine-tuning with Semantic Information
+    <div class="main-container">
+        <div id="content" class="container-fluid d-flex flex-column align-items-center">
+            <div class="hero-section">
+                <h1>🔬 Interactive Code Generation Leaderboard 🔬</h1>
+                <p class="subtitle">Comprehensive evaluation of semantic information in code generation models across multiple tasks and benchmarks</p>
+                <div class="alert alert-info">
+                    <strong>📊 Submit Your Model!</strong> Add your own LLM results to the leaderboard by filling out the form in each tab below.
+                </div>
             </div>
-            <div class="table-responsive">
-                <table class="table table-bordered">
-                    <thead>
-                        <tr>
-                            <th rowspan="2">BaseModel</th>
-                            <th rowspan="2">TrainCorpus</th>
-                            <th colspan="2" class="header-group">Finetune</th>
-                            <th rowspan="2" class="metric-header">Code Repair<br>MBPP-R</th>
-                            <th colspan="3" class="header-group">Code Synthesis</th>
-                            <th colspan="2" class="header-group">Code Reasoning</th>
-                        </tr>
-                        <tr>
-                            <th>downstream</th>
-                            <th>trace</th>
-                            <th>MBPP</th>
-                            <th>BigcodeBench</th>
-                            <th>LiveCodeBench</th>
-                            <th>CRUXEval-I</th>
-                            <th>CRUXEval-O</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <tr>
-                            <td rowspan="8" class="model-name"><strong>DeepSeek-Coder</strong></td>
-                            <td class="model-name">-</td>
-                            <td><span class="xmark">✗</span></td>
-                            <td><span class="xmark">✗</span></td>
-                            <td>17.7</td>
-                            <td>71.9</td>
-                            <td>41.5</td>
-                            <td class="best-score">40.8</td>
-                            <td>40.0</td>
-                            <td>40.4</td>
-                        </tr>
-                        <tr>
-                            <td class="model-name">only NL2Code</td>
-                            <td><span class="checkmark">✓</span></td>
-                            <td><span class="xmark">✗</span></td>
-                            <td>25.4</td>
-                            <td>72.9</td>
-                            <td>43.7</td>
-                            <td>12.6</td>
-                            <td>60.1</td>
-                            <td>55.4</td>
-                        </tr>
-                        <tr>
-                            <td class="model-name">w/o trace</td>
-                            <td><span class="checkmark">✓</span></td>
-                            <td><span class="xmark">✗</span></td>
-                            <td>39.2</td>
-                            <td>75.9</td>
-                            <td>45.4</td>
-                            <td>35.7</td>
-                            <td>61.9</td>
-                            <td>56.6</td>
-                        </tr>
-                        <tr>
-                            <td class="model-name">Concise</td>
-                            <td><span class="checkmark">✓</span></td>
-                            <td><span class="checkmark">✓</span></td>
-                            <td>39.2</td>
-                            <td>74.4</td>
-                            <td>44.3</td>
-                            <td>29.4</td>
-                            <td>61.6</td>
-                            <td>55.0</td>
-                        </tr>
-                        <tr>
-                            <td class="model-name">CodeExecutor</td>
-                            <td><span class="checkmark">✓</span></td>
-                            <td><span class="checkmark">✓</span></td>
-                            <td>38.4</td>
-                            <td class="best-score">77.2</td>
-                            <td>44.6</td>
-                            <td>31.5</td>
-                            <td>60.4</td>
-                            <td>56.1</td>
-                        </tr>
-                        <tr>
-                            <td class="model-name">NeXT</td>
-                            <td><span class="checkmark">✓</span></td>
-                            <td><span class="checkmark">✓</span></td>
-                            <td>37.6</td>
-                            <td>76.7</td>
-                            <td>44.0</td>
-                            <td>36.1</td>
-                            <td>61.3</td>
-                            <td>54.2</td>
-                        </tr>
-                        <tr>
-                            <td class="model-name">SemCoder(GPT4o)</td>
-                            <td><span class="checkmark">✓</span></td>
-                            <td><span class="checkmark">✓</span></td>
-                            <td>37.0</td>
-                            <td>75.7</td>
-                            <td>45.4</td>
-                            <td>31.5</td>
-                            <td class="best-score">62.0</td>
-                            <td class="best-score">58.1</td>
-                        </tr>
-                        <tr>
-                            <td class="model-name">SemCoder</td>
-                            <td><span class="checkmark">✓</span></td>
-                            <td><span class="checkmark">✓</span></td>
-                            <td class="best-score">40.5</td>
-                            <td>76.4</td>
-                            <td class="best-score">45.7</td>
-                            <td>29.0</td>
-                            <td>59.5</td>
-                            <td>55.4</td>
-                        </tr>
 
-                        <tr class="section-divider">
-                            <td rowspan="8" class="model-name"><strong>LLaMA</strong></td>
-                            <td class="model-name">-</td>
-                            <td><span class="xmark">✗</span></td>
-                            <td><span class="xmark">✗</span></td>
-                            <td>20.1</td>
-                            <td>58.6</td>
-                            <td>31.4</td>
-                            <td class="best-score">27.3</td>
-                            <td>42.6</td>
-                            <td>36.2</td>
-                        </tr>
-                        <tr>
-                            <td class="model-name">only NL2Code</td>
-                            <td><span class="checkmark">✓</span></td>
-                            <td><span class="xmark">✗</span></td>
-                            <td>24.9</td>
-                            <td class="best-score">73.7</td>
-                            <td class="best-score">44.1</td>
-                            <td>18.1</td>
-                            <td class="best-score">60.1</td>
-                            <td>55.9</td>
-                        </tr>
-                        <tr>
-                            <td class="model-name">w/o trace</td>
-                            <td><span class="checkmark">✓</span></td>
-                            <td><span class="xmark">✗</span></td>
-                            <td>29.1</td>
-                            <td>59.1</td>
-                            <td>31.6</td>
-                            <td>8.4</td>
-                            <td>58.8</td>
-                            <td>54.0</td>
-                        </tr>
-                        <tr>
-                            <td class="model-name">Concise</td>
-                            <td><span class="checkmark">✓</span></td>
-                            <td><span class="checkmark">✓</span></td>
-                            <td>27.0</td>
-                            <td>59.4</td>
-                            <td>30.4</td>
-                            <td>14.7</td>
-                            <td>55.8</td>
-                            <td>57.6</td>
-                        </tr>
-                        <tr>
-                            <td class="model-name">CodeExecutor</td>
-                            <td><span class="checkmark">✓</span></td>
-                            <td><span class="checkmark">✓</span></td>
-                            <td>24.9</td>
-                            <td>59.4</td>
-                            <td>32.6</td>
-                            <td>9.7</td>
-                            <td>57.0</td>
-                            <td>55.2</td>
-                        </tr>
-                        <tr>
-                            <td class="model-name">NeXT</td>
-                            <td><span class="checkmark">✓</span></td>
-                            <td><span class="checkmark">✓</span></td>
-                            <td>29.1</td>
-                            <td>61.4</td>
-                            <td>30.6</td>
-                            <td>16.0</td>
-                            <td>56.9</td>
-                            <td>52.8</td>
-                        </tr>
-                        <tr>
-                            <td class="model-name">SemCoder(GPT4o)</td>
-                            <td><span class="checkmark">✓</span></td>
-                            <td><span class="checkmark">✓</span></td>
-                            <td>22.2</td>
-                            <td>59.4</td>
-                            <td>31.4</td>
-                            <td>10.9</td>
-                            <td>58.6</td>
-                            <td class="best-score">58.0</td>
-                        </tr>
-                        <tr>
-                            <td class="model-name">SemCoder</td>
-                            <td><span class="checkmark">✓</span></td>
-                            <td><span class="checkmark">✓</span></td>
-                            <td class="best-score">29.4</td>
-                            <td>61.9</td>
-                            <td>33.4</td>
-                            <td>14.7</td>
-                            <td>59.9</td>
-                            <td>55.4</td>
-                        </tr>
+            <!-- Navigation Tabs -->
+            <ul class="nav nav-tabs w-100" id="leaderboardTabs" role="tablist">
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link active" id="finetuning-tab" data-bs-toggle="tab" data-bs-target="#finetuning" type="button" role="tab" aria-controls="finetuning" aria-selected="true">
+                        🔧 Fine-tuning Results
+                    </button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link" id="livecode-tab" data-bs-toggle="tab" data-bs-target="#livecode" type="button" role="tab" aria-controls="livecode" aria-selected="false">
+                        🚀 Inference at Test-scaling Results
+                    </button>
+                </li>
+            </ul>
 
-                        <tr class="section-divider">
-                            <td rowspan="8" class="model-name"><strong>Gemma2</strong></td>
-                            <td class="model-name">-</td>
-                            <td><span class="xmark">✗</span></td>
-                            <td><span class="xmark">✗</span></td>
-                            <td>20.9</td>
-                            <td class="best-score">63.7</td>
-                            <td class="best-score">29.8</td>
-                            <td class="best-score">32.8</td>
-                            <td>49.2</td>
-                            <td>41.5</td>
-                        </tr>
-                        <tr>
-                            <td class="model-name">only NL2Code</td>
-                            <td><span class="checkmark">✓</span></td>
-                            <td><span class="xmark">✗</span></td>
-                            <td>19.8</td>
-                            <td>61.4</td>
-                            <td>26.8</td>
-                            <td>12.6</td>
-                            <td>57.9</td>
-                            <td>55.6</td>
-                        </tr>
-                        <tr>
-                            <td class="model-name">w/o trace</td>
-                            <td><span class="checkmark">✓</span></td>
-                            <td><span class="xmark">✗</span></td>
-                            <td>24.9</td>
-                            <td>58.4</td>
-                            <td>25.1</td>
-                            <td>6.7</td>
-                            <td>57.8</td>
-                            <td>57.5</td>
-                        </tr>
-                        <tr>
-                            <td class="model-name">Concise</td>
-                            <td><span class="checkmark">✓</span></td>
-                            <td><span class="checkmark">✓</span></td>
-                            <td>22.8</td>
-                            <td>60.2</td>
-                            <td>28.8</td>
-                            <td>8.0</td>
-                            <td>57.6</td>
-                            <td>57.2</td>
-                        </tr>
-                        <tr>
-                            <td class="model-name">CodeExecutor</td>
-                            <td><span class="checkmark">✓</span></td>
-                            <td><span class="checkmark">✓</span></td>
-                            <td>22.8</td>
-                            <td>59.4</td>
-                            <td>27.3</td>
-                            <td>8.8</td>
-                            <td>58.9</td>
-                            <td class="best-score">58.2</td>
-                        </tr>
-                        <tr>
-                            <td class="model-name">NeXT</td>
-                            <td><span class="checkmark">✓</span></td>
-                            <td><span class="checkmark">✓</span></td>
-                            <td>26.2</td>
-                            <td>58.1</td>
-                            <td>26.9</td>
-                            <td>8.8</td>
-                            <td class="best-score">59.5</td>
-                            <td>55.8</td>
-                        </tr>
-                        <tr>
-                            <td class="model-name">SemCoder(GPT4o)</td>
-                            <td><span class="checkmark">✓</span></td>
-                            <td><span class="checkmark">✓</span></td>
-                            <td>24.1</td>
-                            <td>62.9</td>
-                            <td>29.5</td>
-                            <td>8.4</td>
-                            <td>58.9</td>
-                            <td>56.5</td>
-                        </tr>
-                        <tr>
-                            <td class="model-name">SemCoder</td>
-                            <td><span class="checkmark">✓</span></td>
-                            <td><span class="checkmark">✓</span></td>
-                            <td class="best-score">26.2</td>
-                            <td>62.2</td>
-                            <td>27.6</td>
-                            <td>13.0</td>
-                            <td>58.9</td>
-                            <td>56.8</td>
-                        </tr>
-                    </tbody>
-                </table>
+            <!-- Tab Content -->
+            <div class="tab-content w-100" id="leaderboardTabsContent">
+                <!-- Fine-tuning Tab -->
+                <div class="tab-pane fade show active" id="finetuning" role="tabpanel" aria-labelledby="finetuning-tab">
+                    <!-- Upload Section for Fine-tuning -->
+                    <div class="upload-section">
+                        <div class="upload-title">
+                            📤 Submit Your Fine-tuning Results
+                        </div>
+                        <form id="finetuningForm" class="upload-form">
+                            <div class="form-group">
+                                <label class="form-label">Model Name *</label>
+                                <input type="text" class="form-control" id="ft-model-name" placeholder="e.g., My-Custom-Model" required>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">HuggingFace Path *</label>
+                                <input type="text" class="form-control" id="ft-hf-path" placeholder="e.g., username/model-name" required>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Base Model</label>
+                                <select class="form-control" id="ft-base-model">
+                                    <option value="DeepSeek-Coder">DeepSeek-Coder</option>
+                                    <option value="LLaMA">LLaMA</option>
+                                    <option value="Gemma2">Gemma2</option>
+                                    <option value="Other">Other</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Train Corpus</label>
+                                <input type="text" class="form-control" id="ft-train-corpus" placeholder="e.g., Custom Dataset">
+                            </div>
+                        </form>
+                        <div class="text-center">
+                            <button type="submit" form="finetuningForm" class="btn-submit">
+                                🚀 Add to Leaderboard
+                            </button>
+                        </div>
+                        <div id="ft-status" class="mt-3"></div>
+                    </div>
+
+                    <!-- Fine-tuning Results Table -->
+                    <div class="table-container">
+                        <div class="table-title">
+                            Table 1: Full-Parameter Fine-tuning with Semantic Information
+                        </div>
+                        <div class="table-responsive">
+                            <table class="table table-bordered" id="finetuningTable">
+                                <thead>
+                                    <tr>
+                                        <th rowspan="2">BaseModel</th>
+                                        <th rowspan="2">TrainCorpus</th>
+                                        <th colspan="2" class="header-group">Finetune</th>
+                                        <th rowspan="2" class="metric-header">Code Repair<br>MBPP-R</th>
+                                        <th colspan="3" class="header-group">Code Synthesis</th>
+                                        <th colspan="2" class="header-group">Code Reasoning</th>
+                                        <th rowspan="2">HF Path</th>
+                                    </tr>
+                                    <tr>
+                                        <th>downstream</th>
+                                        <th>trace</th>
+                                        <th>MBPP</th>
+                                        <th>BigcodeBench</th>
+                                        <th>LiveCodeBench</th>
+                                        <th>CRUXEval-I</th>
+                                        <th>CRUXEval-O</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="finetuningTableBody">
+                                    <!-- Original data will be populated here -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- LiveCodeBench Tab -->
+                <div class="tab-pane fade" id="livecode" role="tabpanel" aria-labelledby="livecode-tab">
+                    <!-- Upload Section for LiveCodeBench -->
+                    <div class="upload-section">
+                        <div class="upload-title">
+                            📤 Submit Your LiveCodeBench Results
+                        </div>
+                        <form id="livecodeForm" class="upload-form">
+                            <div class="form-group">
+                                <label class="form-label">Model Name *</label>
+                                <input type="text" class="form-control" id="lc-model-name" placeholder="e.g., My-Custom-Model" required>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">HuggingFace Path *</label>
+                                <input type="text" class="form-control" id="lc-hf-path" placeholder="e.g., username/model-name" required>
+                            </div>
+                        </form>
+                        <div class="text-center">
+                            <button type="submit" form="livecodeForm" class="btn-submit">
+                                🚀 Add to Leaderboard
+                            </button>
+                        </div>
+                        <div id="lc-status" class="mt-3"></div>
+                    </div>
+
+                    <!-- LiveCodeBench Results Table -->
+                    <div class="table-container">
+                        <div class="table-title">
+                            Table 2: Pass@1 Accuracy on LiveCodeBench (Easy) Private Test Set
+                        </div>
+                        <div class="table-responsive">
+                            <table class="table table-bordered" id="livecodeTable">
+                                <thead>
+                                    <tr>
+                                        <th rowspan="2">Model</th>
+                                        <th rowspan="2">Greedy</th>
+                                        <th rowspan="2">COT</th>
+                                        <th colspan="5" class="header-group">Sequential Scaling</th>
+                                        <th colspan="5" class="header-group">Parallel Scaling</th>
+                                        <th rowspan="2">HF Path</th>
+                                    </tr>
+                                    <tr>
+                                        <th>w/o trace</th>
+                                        <th>CodeExecutor</th>
+                                        <th>Concise</th>
+                                        <th>NeXT</th>
+                                        <th>SemCoder</th>
+                                        <th>w/o trace</th>
+                                        <th>CodeExecutor</th>
+                                        <th>Concise</th>
+                                        <th>NeXT</th>
+                                        <th>SemCoder</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="livecodeTableBody">
+                                    <!-- Original data will be populated here -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
             </div>
-        </div>
 
-        <!-- Table 2: LiveCodeBench Results -->
-        <div class="table-container">
-            <div class="table-title">
-                Table 2: Pass@1 Accuracy on LiveCodeBench (Easy) Private Test Set
+            <div style="margin: 50px 0; padding: 20px; background: rgba(248, 249, 250, 0.8); border-radius: 15px; text-align: center;">
+                <p style="color: #6c757d; font-size: 0.9em; margin: 0;">
+                    Research results showing the impact of semantic information on code generation tasks across different model architectures and training approaches.
+                    Best scores per model group are highlighted in green. User-submitted models are highlighted in yellow.
+                </p>
             </div>
-            <div class="table-responsive">
-                <table class="table table-bordered">
-                    <thead>
-                        <tr>
-                            <th rowspan="2">Model</th>
-                            <th rowspan="2">Greedy</th>
-                            <th rowspan="2">COT</th>
-                            <th colspan="5" class="header-group">Sequential Scaling</th>
-                            <th colspan="5" class="header-group">Parallel Scaling</th>
-                        </tr>
-                        <tr>
-                            <th>w/o trace</th>
-                            <th>CodeExecutor</th>
-                            <th>Concise</th>
-                            <th>NeXT</th>
-                            <th>SemCoder</th>
-                            <th>w/o trace</th>
-                            <th>CodeExecutor</th>
-                            <th>Concise</th>
-                            <th>NeXT</th>
-                            <th>SemCoder</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <tr>
-                            <td class="model-name">GPT-4o-mini</td>
-                            <td>73.08</td>
-                            <td>73.08</td>
-                            <td>98.46</td>
-                            <td>98.46</td>
-                            <td class="best-score">99.23</td>
-                            <td class="best-score">99.23</td>
-                            <td class="best-score">99.23</td>
-                            <td>88.46</td>
-                            <td>80.77</td>
-                            <td>80.77</td>
-                            <td>84.62</td>
-                            <td>80.77</td>
-                        </tr>
-                        <tr>
-                            <td class="model-name">deepseek-chat(V3)</td>
-                            <td>84.62</td>
-                            <td class="best-score">100.00</td>
-                            <td class="best-score">100.00</td>
-                            <td class="best-score">100.00</td>
-                            <td class="best-score">100.00</td>
-                            <td class="best-score">100.00</td>
-                            <td class="best-score">100.00</td>
-                            <td>96.15</td>
-                            <td>96.15</td>
-                            <td>96.15</td>
-                            <td>96.15</td>
-                            <td>92.3</td>
-                        </tr>
-                        
-                        <tr class="section-divider">
-                            <td colspan="12" style="text-align: center; font-style: italic; font-weight: 600; background-color: #e9ecef;">
-                                Reasoning Compatible Model
-                            </td>
-                        </tr>
-                        
-                        <tr>
-                            <td class="model-name">AIDC-AI/Marco-o1</td>
-                            <td>53.85</td>
-                            <td>50.00</td>
-                            <td>76.92</td>
-                            <td>69.23</td>
-                            <td>76.92</td>
-                            <td>73.08</td>
-                            <td>73.08</td>
-                            <td>61.54</td>
-                            <td>53.85</td>
-                            <td>69.23</td>
-                            <td>61.54</td>
-                            <td>57.69</td>
-                        </tr>
-                        <tr>
-                            <td class="model-name">microsoft/phi-4</td>
-                            <td>53.85</td>
-                            <td>73.08</td>
-                            <td class="best-score">100.00</td>
-                            <td>96.15</td>
-                            <td class="best-score">100.00</td>
-                            <td>91.54</td>
-                            <td class="best-score">100.00</td>
-                            <td>80.77</td>
-                            <td>76.92</td>
-                            <td>84.62</td>
-                            <td>80.77</td>
-                            <td>84.62</td>
-                        </tr>
-                        
-                        <tr class="section-divider">
-                            <td colspan="12" style="text-align: center; font-style: italic; font-weight: 600; background-color: #e9ecef;">
-                                Instruction of Foundation Model
-                            </td>
-                        </tr>
-                        
-                        <tr>
-                            <td class="model-name">Llama-3.1-8B-Inst</td>
-                            <td>34.62</td>
-                            <td>34.62</td>
-                            <td>67.69</td>
-                            <td>66.92</td>
-                            <td>74.62</td>
-                            <td>74.62</td>
-                            <td>65.38</td>
-                            <td>46.15</td>
-                            <td>42.31</td>
-                            <td>57.69</td>
-                            <td>57.69</td>
-                            <td>57.69</td>
-                        </tr>
-                        <tr>
-                            <td class="model-name">deepseek-coder-6.7b-Inst</td>
-                            <td>42.31</td>
-                            <td>46.15</td>
-                            <td>68.46</td>
-                            <td>61.54</td>
-                            <td>69.23</td>
-                            <td>76.15</td>
-                            <td>69.23</td>
-                            <td>53.85</td>
-                            <td>50.00</td>
-                            <td>57.69</td>
-                            <td>61.54</td>
-                            <td>50.00</td>
-                        </tr>
-                        <tr>
-                            <td class="model-name">Qwen2.5-Coder-7b-Inst</td>
-                            <td>61.54</td>
-                            <td>34.62</td>
-                            <td>83.85</td>
-                            <td>87.69</td>
-                            <td>80.77</td>
-                            <td class="best-score">90.77</td>
-                            <td>86.92</td>
-                            <td>53.85</td>
-                            <td>61.54</td>
-                            <td>65.38</td>
-                            <td>50.00</td>
-                            <td>53.85</td>
-                        </tr>
-                    </tbody>
-                </table>
-            </div>
-        </div>
-
-        <div style="margin: 50px 0; padding: 20px; background: #f8f9fa; border-radius: 8px; text-align: center;">
-            <p style="color: #6c757d; font-size: 0.9em; margin: 0;">
-                Research results showing the impact of semantic information on code generation tasks across different model architectures and training approaches.
-                Best scores per model group are highlighted in green.
-            </p>
         </div>
     </div>
+
+    <script>
+        // Original data for fine-tuning table
+        const originalFinetuningData = [
+            // DeepSeek-Coder data
+            {baseModel: "DeepSeek-Coder", trainCorpus: "-", downstream: "✗", trace: "✗", mbppR: 17.7, mbpp: 71.9, bigcode: 41.5, livecode: 40.8, cruxI: 40.0, cruxO: 40.4, hfPath: "-"},
+            {baseModel: "DeepSeek-Coder", trainCorpus: "only NL2Code", downstream: "✓", trace: "✗", mbppR: 25.4, mbpp: 72.9, bigcode: 43.7, livecode: 12.6, cruxI: 60.1, cruxO: 55.4, hfPath: "-"},
+            {baseModel: "DeepSeek-Coder", trainCorpus: "w/o trace", downstream: "✓", trace: "✗", mbppR: 39.2, mbpp: 75.9, bigcode: 45.4, livecode: 35.7, cruxI: 61.9, cruxO: 56.6, hfPath: "-"},
+            {baseModel: "DeepSeek-Coder", trainCorpus: "Concise", downstream: "✓", trace: "✓", mbppR: 39.2, mbpp: 74.4, bigcode: 44.3, livecode: 29.4, cruxI: 61.6, cruxO: 55.0, hfPath: "-"},
+            {baseModel: "DeepSeek-Coder", trainCorpus: "CodeExecutor", downstream: "✓", trace: "✓", mbppR: 38.4, mbpp: 77.2, bigcode: 44.6, livecode: 31.5, cruxI: 60.4, cruxO: 56.1, hfPath: "-"},
+            {baseModel: "DeepSeek-Coder", trainCorpus: "NeXT", downstream: "✓", trace: "✓", mbppR: 37.6, mbpp: 76.7, bigcode: 44.0, livecode: 36.1, cruxI: 61.3, cruxO: 54.2, hfPath: "-"},
+            {baseModel: "DeepSeek-Coder", trainCorpus: "SemCoder(GPT4o)", downstream: "✓", trace: "✓", mbppR: 37.0, mbpp: 75.7, bigcode: 45.4, livecode: 31.5, cruxI: 62.0, cruxO: 58.1, hfPath: "-"},
+            {baseModel: "DeepSeek-Coder", trainCorpus: "SemCoder", downstream: "✓", trace: "✓", mbppR: 40.5, mbpp: 76.4, bigcode: 45.7, livecode: 29.0, cruxI: 59.5, cruxO: 55.4, hfPath: "-"},
+            // LLaMA data
+            {baseModel: "LLaMA", trainCorpus: "-", downstream: "✗", trace: "✗", mbppR: 20.1, mbpp: 58.6, bigcode: 31.4, livecode: 27.3, cruxI: 42.6, cruxO: 36.2, hfPath: "-"},
+            {baseModel: "LLaMA", trainCorpus: "only NL2Code", downstream: "✓", trace: "✗", mbppR: 24.9, mbpp: 73.7, bigcode: 44.1, livecode: 18.1, cruxI: 60.1, cruxO: 55.9, hfPath: "-"},
+            {baseModel: "LLaMA", trainCorpus: "w/o trace", downstream: "✓", trace: "✗", mbppR: 29.1, mbpp: 59.1, bigcode: 31.6, livecode: 8.4, cruxI: 58.8, cruxO: 54.0, hfPath: "-"},
+            {baseModel: "LLaMA", trainCorpus: "Concise", downstream: "✓", trace: "✓", mbppR: 27.0, mbpp: 59.4, bigcode: 30.4, livecode: 14.7, cruxI: 55.8, cruxO: 57.6, hfPath: "-"},
+            {baseModel: "LLaMA", trainCorpus: "CodeExecutor", downstream: "✓", trace: "✓", mbppR: 24.9, mbpp: 59.4, bigcode: 32.6, livecode: 9.7, cruxI: 57.0, cruxO: 55.2, hfPath: "-"},
+            {baseModel: "LLaMA", trainCorpus: "NeXT", downstream: "✓", trace: "✓", mbppR: 29.1, mbpp: 61.4, bigcode: 30.6, livecode: 16.0, cruxI: 56.9, cruxO: 52.8, hfPath: "-"},
+            {baseModel: "LLaMA", trainCorpus: "SemCoder(GPT4o)", downstream: "✓", trace: "✓", mbppR: 22.2, mbpp: 59.4, bigcode: 31.4, livecode: 10.9, cruxI: 58.6, cruxO: 58.0, hfPath: "-"},
+            {baseModel: "LLaMA", trainCorpus: "SemCoder", downstream: "✓", trace: "✓", mbppR: 29.4, mbpp: 61.9, bigcode: 33.4, livecode: 14.7, cruxI: 59.9, cruxO: 55.4, hfPath: "-"},
+            // Gemma2 data
+            {baseModel: "Gemma2", trainCorpus: "-", downstream: "✗", trace: "✗", mbppR: 20.9, mbpp: 63.7, bigcode: 29.8, livecode: 32.8, cruxI: 49.2, cruxO: 41.5, hfPath: "-"},
+            {baseModel: "Gemma2", trainCorpus: "only NL2Code", downstream: "✓", trace: "✗", mbppR: 19.8, mbpp: 61.4, bigcode: 26.8, livecode: 12.6, cruxI: 57.9, cruxO: 55.6, hfPath: "-"},
+            {baseModel: "Gemma2", trainCorpus: "w/o trace", downstream: "✓", trace: "✗", mbppR: 24.9, mbpp: 58.4, bigcode: 25.1, livecode: 6.7, cruxI: 57.8, cruxO: 57.5, hfPath: "-"},
+            {baseModel: "Gemma2", trainCorpus: "Concise", downstream: "✓", trace: "✓", mbppR: 22.8, mbpp: 60.2, bigcode: 28.8, livecode: 8.0, cruxI: 57.6, cruxO: 57.2, hfPath: "-"},
+            {baseModel: "Gemma2", trainCorpus: "CodeExecutor", downstream: "✓", trace: "✓", mbppR: 22.8, mbpp: 59.4, bigcode: 27.3, livecode: 8.8, cruxI: 58.9, cruxO: 58.2, hfPath: "-"},
+            {baseModel: "Gemma2", trainCorpus: "NeXT", downstream: "✓", trace: "✓", mbppR: 26.2, mbpp: 58.1, bigcode: 26.9, livecode: 8.8, cruxI: 59.5, cruxO: 55.8, hfPath: "-"},
+            {baseModel: "Gemma2", trainCorpus: "SemCoder(GPT4o)", downstream: "✓", trace: "✓", mbppR: 24.1, mbpp: 62.9, bigcode: 29.5, livecode: 8.4, cruxI: 58.9, cruxO: 56.5, hfPath: "-"},
+            {baseModel: "Gemma2", trainCorpus: "SemCoder", downstream: "✓", trace: "✓", mbppR: 26.2, mbpp: 62.2, bigcode: 27.6, livecode: 13.0, cruxI: 58.9, cruxO: 56.8, hfPath: "-"}
+        ];
+
+        // Original data for LiveCodeBench table
+        const originalLivecodeData = [
+            {model: "GPT-4o-mini", greedy: 73.08, cot: 73.08, seqWo: 98.46, seqExec: 98.46, seqConcise: 99.23, seqNext: 99.23, seqSem: 99.23, parWo: 88.46, parExec: 80.77, parConcise: 80.77, parNext: 84.62, parSem: 80.77, hfPath: "openai/gpt-4o-mini"},
+            {model: "deepseek-chat(V3)", greedy: 84.62, cot: 100.00, seqWo: 100.00, seqExec: 100.00, seqConcise: 100.00, seqNext: 100.00, seqSem: 100.00, parWo: 96.15, parExec: 96.15, parConcise: 96.15, parNext: 96.15, parSem: 92.3, hfPath: "deepseek-ai/deepseek-chat"},
+            {model: "AIDC-AI/Marco-o1", greedy: 53.85, cot: 50.00, seqWo: 76.92, seqExec: 69.23, seqConcise: 76.92, seqNext: 73.08, seqSem: 73.08, parWo: 61.54, parExec: 53.85, parConcise: 69.23, parNext: 61.54, parSem: 57.69, hfPath: "AIDC-AI/Marco-o1"},
+            {model: "microsoft/phi-4", greedy: 53.85, cot: 73.08, seqWo: 100.00, seqExec: 96.15, seqConcise: 100.00, seqNext: 91.54, seqSem: 100.00, parWo: 80.77, parExec: 76.92, parConcise: 84.62, parNext: 80.77, parSem: 84.62, hfPath: "microsoft/phi-4"},
+            {model: "Llama-3.1-8B-Inst", greedy: 34.62, cot: 34.62, seqWo: 67.69, seqExec: 66.92, seqConcise: 74.62, seqNext: 74.62, seqSem: 65.38, parWo: 46.15, parExec: 42.31, parConcise: 57.69, parNext: 57.69, parSem: 57.69, hfPath: "meta-llama/Llama-3.1-8B-Instruct"},
+            {model: "deepseek-coder-6.7b-Inst", greedy: 42.31, cot: 46.15, seqWo: 68.46, seqExec: 61.54, seqConcise: 69.23, seqNext: 76.15, seqSem: 69.23, parWo: 53.85, parExec: 50.00, parConcise: 57.69, parNext: 61.54, parSem: 50.00, hfPath: "deepseek-ai/deepseek-coder-6.7b-instruct"},
+            {model: "Qwen2.5-Coder-7b-Inst", greedy: 61.54, cot: 34.62, seqWo: 83.85, seqExec: 87.69, seqConcise: 80.77, seqNext: 90.77, seqSem: 86.92, parWo: 53.85, parExec: 61.54, parConcise: 65.38, parNext: 50.00, parSem: 53.85, hfPath: "Qwen/Qwen2.5-Coder-7B-Instruct"}
+        ];
+
+        // Store user submissions
+        let userFinetuningData = [];
+        let userLivecodeData = [];
+
+        // Initialize tables on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            populateFinetuningTable();
+            populateLivecodeTable();
+            setupFormHandlers();
+        });
+
+        function populateFinetuningTable() {
+            const tbody = document.getElementById('finetuningTableBody');
+            tbody.innerHTML = '';
+            
+            // Add original data
+            let currentBaseModel = '';
+            originalFinetuningData.forEach((row, index) => {
+                const tr = document.createElement('tr');
+                
+                // Add section divider for new base models
+                if (row.baseModel !== currentBaseModel && currentBaseModel !== '') {
+                    const dividerTr = document.createElement('tr');
+                    dividerTr.className = 'section-divider';
+                    dividerTr.innerHTML = `<td colspan="11" style="text-align: center; font-style: italic; font-weight: 600; background-color: #e9ecef;">${row.baseModel} Models</td>`;
+                    tbody.appendChild(dividerTr);
+                }
+                currentBaseModel = row.baseModel;
+                
+                tr.innerHTML = `
+                    <td class="model-name">${index === 0 || originalFinetuningData[index-1].baseModel !== row.baseModel ? `<strong>${row.baseModel}</strong>` : ''}</td>
+                    <td class="model-name">${row.trainCorpus}</td>
+                    <td><span class="${row.downstream === '✓' ? 'checkmark' : 'xmark'}">${row.downstream}</span></td>
+                    <td><span class="${row.trace === '✓' ? 'checkmark' : 'xmark'}">${row.trace}</span></td>
+                    <td>${row.mbppR}</td>
+                    <td>${row.mbpp}</td>
+                    <td>${row.bigcode}</td>
+                    <td>${row.livecode}</td>
+                    <td>${row.cruxI}</td>
+                    <td>${row.cruxO}</td>
+                    <td>${row.hfPath}</td>
+                `;
+                tbody.appendChild(tr);
+            });
+            
+            // Add user submitted data
+            userFinetuningData.forEach(row => {
+                const tr = document.createElement('tr');
+                tr.className = 'user-submitted';
+                tr.innerHTML = `
+                    <td class="model-name"><strong>${row.baseModel}</strong></td>
+                    <td class="model-name">${row.trainCorpus}</td>
+                    <td><span class="checkmark">✓</span></td>
+                    <td><span class="checkmark">✓</span></td>
+                    <td>${row.mbppR || '-'}</td>
+                    <td>${row.mbpp || '-'}</td>
+                    <td>${row.bigcode || '-'}</td>
+                    <td>${row.livecode || '-'}</td>
+                    <td>${row.cruxI || '-'}</td>
+                    <td>${row.cruxO || '-'}</td>
+                    <td><a href="https://huggingface.co/${row.hfPath}" target="_blank">${row.hfPath}</a></td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        function populateLivecodeTable() {
+            const tbody = document.getElementById('livecodeTableBody');
+            tbody.innerHTML = '';
+            
+            // Add original data with section dividers
+            const sections = [
+                {title: "Foundation Models", start: 0, end: 2},
+                {title: "Reasoning Compatible Models", start: 2, end: 4},
+                {title: "Instruction-tuned Foundation Models", start: 4, end: 7}
+            ];
+            
+            sections.forEach(section => {
+                // Add section divider
+                const dividerTr = document.createElement('tr');
+                dividerTr.className = 'section-divider';
+                dividerTr.innerHTML = `<td colspan="13" style="text-align: center; font-style: italic; font-weight: 600; background-color: #e9ecef;">${section.title}</td>`;
+                tbody.appendChild(dividerTr);
+                
+                // Add rows for this section
+                for (let i = section.start; i < section.end && i < originalLivecodeData.length; i++) {
+                    const row = originalLivecodeData[i];
+                    const tr = document.createElement('tr');
+                    tr.innerHTML = `
+                        <td class="model-name">${row.model}</td>
+                        <td>${row.greedy}</td>
+                        <td>${row.cot}</td>
+                        <td>${row.seqWo}</td>
+                        <td>${row.seqExec}</td>
+                        <td>${row.seqConcise}</td>
+                        <td>${row.seqNext}</td>
+                        <td>${row.seqSem}</td>
+                        <td>${row.parWo}</td>
+                        <td>${row.parExec}</td>
+                        <td>${row.parConcise}</td>
+                        <td>${row.parNext}</td>
+                        <td>${row.parSem}</td>
+                        <td><a href="https://huggingface.co/${row.hfPath}" target="_blank">${row.hfPath}</a></td>
+                    `;
+                    tbody.appendChild(tr);
+                }
+            });
+            
+            // Add user submitted data
+            if (userLivecodeData.length > 0) {
+                const dividerTr = document.createElement('tr');
+                dividerTr.className = 'section-divider';
+                dividerTr.innerHTML = `<td colspan="13" style="text-align: center; font-style: italic; font-weight: 600; background-color: #e9ecef;">User Submitted Models</td>`;
+                tbody.appendChild(dividerTr);
+                
+                userLivecodeData.forEach(row => {
+                    const tr = document.createElement('tr');
+                    tr.className = 'user-submitted';
+                    tr.innerHTML = `
+                        <td class="model-name">${row.model}</td>
+                        <td>${row.greedy || '-'}</td>
+                        <td>${row.cot || '-'}</td>
+                        <td>${row.seqWo || '-'}</td>
+                        <td>${row.seqExec || '-'}</td>
+                        <td>${row.seqConcise || '-'}</td>
+                        <td>${row.seqNext || '-'}</td>
+                        <td>${row.seqSem || '-'}</td>
+                        <td>${row.parWo || '-'}</td>
+                        <td>${row.parExec || '-'}</td>
+                        <td>${row.parConcise || '-'}</td>
+                        <td>${row.parNext || '-'}</td>
+                        <td>${row.parSem || '-'}</td>
+                        <td><a href="https://huggingface.co/${row.hfPath}" target="_blank">${row.hfPath}</a></td>
+                    `;
+                    tbody.appendChild(tr);
+                });
+            }
+        }
+
+        function setupFormHandlers() {
+            // Fine-tuning form handler
+            document.getElementById('finetuningForm').addEventListener('submit', function(e) {
+                e.preventDefault();
+                
+                const formData = {
+                    model: document.getElementById('ft-model-name').value,
+                    hfPath: document.getElementById('ft-hf-path').value,
+                    baseModel: document.getElementById('ft-base-model').value,
+                    trainCorpus: document.getElementById('ft-train-corpus').value || 'Custom'
+                };
+                
+                if (!formData.model || !formData.hfPath) {
+                    showStatus('ft-status', 'Please fill in required fields (Model Name and HuggingFace Path)', 'error');
+                    return;
+                }
+                
+                // Simulate sending to tracewise email
+                simulateEmailSubmission(formData, 'fine-tuning');
+                this.reset();
+                showStatus('ft-status', '📧 Your submission has been anonymously sent to the tracewise email receiver. We will assess your submission after paper publish.', 'success');
+            });
+
+            // LiveCodeBench form handler
+            document.getElementById('livecodeForm').addEventListener('submit', function(e) {
+                e.preventDefault();
+                
+                const formData = {
+                    model: document.getElementById('lc-model-name').value,
+                    hfPath: document.getElementById('lc-hf-path').value
+                };
+                
+                if (!formData.model || !formData.hfPath) {
+                    showStatus('lc-status', 'Please fill in required fields (Model Name and HuggingFace Path)', 'error');
+                    return;
+                }
+                
+                // Simulate sending to tracewise email
+                simulateEmailSubmission(formData, 'livecode');
+                this.reset();
+                showStatus('lc-status', '📧 Your submission has been anonymously sent to the tracewise email receiver. We will assess your submission after paper publish.', 'success');
+            });
+        }
+
+        function simulateEmailSubmission(formData, type) {
+            // Simulate email sending process
+            console.log(`📧 Submitting ${type} data to tracewise email:`, formData);
+            
+            // You could add more realistic simulation here, such as:
+            // - Adding a loading spinner
+            // - Simulating network delay
+            // - Logging submission timestamp
+            
+            const timestamp = new Date().toISOString();
+            console.log(`✅ Submission sent at ${timestamp}`);
+            
+            // Optional: Store submission locally for demo purposes
+            const submission = {
+                ...formData,
+                type: type,
+                timestamp: timestamp,
+                status: 'pending_review'
+            };
+            
+            // Add to a submissions log (for demo purposes)
+            if (!window.submissionLog) {
+                window.submissionLog = [];
+            }
+            window.submissionLog.push(submission);
+        }
+
+        function showStatus(elementId, message, type) {
+            const statusElement = document.getElementById(elementId);
+            statusElement.innerHTML = `
+                <div class="alert alert-${type === 'success' ? 'success' : 'danger'}" role="alert">
+                    ${message}
+                </div>
+            `;
+            
+            // Auto-hide after 5 seconds
+            setTimeout(() => {
+                statusElement.innerHTML = '';
+            }, 5000);
+        }
+    </script>
 </body>
 </html>
+
