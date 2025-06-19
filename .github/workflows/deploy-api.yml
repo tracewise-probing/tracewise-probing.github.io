@@ -92,28 +92,66 @@ jobs:
         
     - name: Install custom modules
       run: |
+        echo "Current directory: $(pwd)"
+        echo "Available files:"
+        ls -la
+        
         # Install custom modules if they exist in the repo
         if [ -f "live_code_bench_execute.py" ]; then
-          echo "Custom module live_code_bench_execute.py found"
+          echo "✓ Custom module live_code_bench_execute.py found"
+        else
+          echo "⚠ live_code_bench_execute.py not found"
         fi
+        
         if [ -f "lcb_dataset.py" ]; then
-          echo "Custom module lcb_dataset.py found"
+          echo "✓ Custom module lcb_dataset.py found"
+        else
+          echo "⚠ lcb_dataset.py not found"
+        fi
+        
+        if [ -f "util.py" ]; then
+          echo "✓ Custom module util.py found"
+        else
+          echo "⚠ util.py not found"
         fi
         
         # Add current directory to Python path for local imports
         echo "PYTHONPATH=$PYTHONPATH:$(pwd)" >> $GITHUB_ENV
         
+    - name: Debug and verify file structure
+      run: |
+        echo "Current working directory: $(pwd)"
+        echo "Listing all files:"
+        ls -la
+        echo "Checking for api2.py in different locations:"
+        find . -name "api2.py" -type f
+        
     - name: Verify API file exists
       run: |
-        if [ ! -f "api2.py" ]; then
+        # Check current directory first
+        if [ -f "api2.py" ]; then
+          echo "✓ api2.py found in current directory"
+        elif [ -f "./api2.py" ]; then
+          echo "✓ api2.py found with ./ prefix"
+        else
           echo "Error: api2.py not found!"
+          echo "Files in current directory:"
+          ls -la
+          echo "Searching for api2.py recursively:"
+          find . -name "api2.py" -type f 2>/dev/null || echo "No api2.py found"
           exit 1
         fi
-        echo "✓ api2.py found"
         
     - name: Test import dependencies
       run: |
+        echo "Current working directory: $(pwd)"
+        echo "Python path: $PYTHONPATH"
         python -c "
+        import sys
+        print('Python version:', sys.version)
+        print('Current working directory:', sys.path[0])
+        print('Python path:', sys.path)
+        
         try:
             print('Testing imports from api2.py...')
             from flask import Flask, request, jsonify, Response, stream_with_context
@@ -143,6 +181,8 @@ jobs:
                     print('✓ live_code_bench_execute imports successful')
                 except ImportError as e:
                     print(f'⚠ live_code_bench_execute import warning: {e}')
+            else:
+                print('⚠ live_code_bench_execute.py not found')
             
             if os.path.exists('lcb_dataset.py'):
                 try:
@@ -150,9 +190,22 @@ jobs:
                     print('✓ lcb_dataset import successful')
                 except ImportError as e:
                     print(f'⚠ lcb_dataset import warning: {e}')
+            else:
+                print('⚠ lcb_dataset.py not found')
+            
+            if os.path.exists('util.py'):
+                try:
+                    from util import post_process_code
+                    print('✓ util import successful')
+                except ImportError as e:
+                    print(f'⚠ util import warning: {e}')
+            else:
+                print('⚠ util.py not found')
                     
         except Exception as e:
             print(f'Import error: {e}')
+            import traceback
+            traceback.print_exc()
             exit(1)
         "
         
