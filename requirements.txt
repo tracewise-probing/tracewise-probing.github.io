@@ -1,18 +1,20 @@
 # Flask and web framework dependencies
-flask==2.3.3
-flask-cors==4.0.0
-markupsafe==2.1.3
+flask
+flask-cors
+markupsafe
 
 # AI/ML API clients
-openai==1.3.7
-anthropic==0.7.8
-google-generativeai==0.3.2
+openai
+anthropic
+google-generativeai
 
 # Data processing and datasets
-datasets==2.14.6
+datasets
 
 # Utility libraries (most are built-in, but including versions for consistency)
-typing-extensions==4.8.0
+typing-extensions
+
+scipy
 
 # Note: The following are built-in Python modules and don't need to be installed:
 # - subprocess, sys, tempfile, os, json, time, random, traceback
@@ -26,7 +28,7 @@ typing-extensions==4.8.0
 # - util.py
 
 # Optional: If you need scipy (commented out in your code)
-# scipy==1.11.4
+# ==1.11.4
 
 # Optional: If you need dspy (commented out in your code)
 # dspy-ai==2.4.9
