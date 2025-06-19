@@ -1,0 +1,244 @@
+# .github/workflows/deploy-api.yml
+name: Deploy Flask API
+
+on:
+  push:
+    branches: [ master, main ]
+  pull_request:
+    branches: [ master, main ]
+  workflow_dispatch:  # Allow manual triggering
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.9'
+        
+    - name: Cache pip dependencies
+      uses: actions/cache@v3
+      with:
+        path: ~/.cache/pip
+        key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements.txt') }}
+        restore-keys: |
+          ${{ runner.os }}-pip-
+          
+    - name: Install system dependencies
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y build-essential
+        
+    - name: Create requirements.txt if not exists
+      run: |
+        if [ ! -f requirements.txt ]; then
+          echo "Creating requirements.txt from api2.py imports..."
+          cat > requirements.txt << EOF
+        flask
+        flask-cors
+        markupsafe
+        openai
+        anthropic
+        google-generativeai
+        EOF
+        fi
+        
+    - name: Install Python dependencies
+      run: |
+        python -m pip install --upgrade pip
+        
+        # Install requirements from requirements.txt if it exists
+        if [ -f requirements.txt ]; then
+          echo "Installing from requirements.txt..."
+          pip install -r requirements.txt
+        fi
+        
+        # Install additional dependencies that might be missing
+        echo "Installing core dependencies..."
+        pip install flask flask-cors markupsafe openai anthropic google-generativeai
+        
+        # Check for and install any missing imports from api2.py
+        echo "Checking for missing dependencies..."
+        python -c "
+        import sys
+        import importlib
+        
+        required_modules = [
+            'flask', 'markupsafe', 'flask_cors', 'openai', 
+            'anthropic', 'google.generativeai', 'json', 'time', 
+            'random', 'traceback', 'subprocess', 'tempfile', 'os'
+        ]
+        
+        missing = []
+        for module in required_modules:
+            try:
+                importlib.import_module(module)
+                print(f'✓ {module} is available')
+            except ImportError:
+                print(f'✗ {module} is missing')
+                missing.append(module)
+        
+        if missing:
+            print(f'Missing modules: {missing}')
+            sys.exit(1)
+        else:
+            print('All required modules are available!')
+        "
+        
+    - name: Install custom modules
+      run: |
+        # Install custom modules if they exist in the repo
+        if [ -f "live_code_bench_execute.py" ]; then
+          echo "Custom module live_code_bench_execute.py found"
+        fi
+        if [ -f "lcb_dataset.py" ]; then
+          echo "Custom module lcb_dataset.py found"
+        fi
+        
+        # Add current directory to Python path for local imports
+        echo "PYTHONPATH=$PYTHONPATH:$(pwd)" >> $GITHUB_ENV
+        
+    - name: Verify API file exists
+      run: |
+        if [ ! -f "api2.py" ]; then
+          echo "Error: api2.py not found!"
+          exit 1
+        fi
+        echo "✓ api2.py found"
+        
+    - name: Test import dependencies
+      run: |
+        python -c "
+        try:
+            print('Testing imports from api2.py...')
+            from flask import Flask, request, jsonify, Response, stream_with_context
+            from markupsafe import escape
+            import subprocess, sys, tempfile, os
+            from flask_cors import CORS
+            import sys, io, traceback, subprocess, tempfile, os
+            import openai
+            from anthropic import Anthropic
+            import google.generativeai as genai
+            from typing import Dict, Any, Tuple
+            import json, time, random, traceback
+            print('✓ All basic imports successful')
+            
+            # Test custom imports if files exist
+            import os
+            if os.path.exists('live_code_bench_execute.py'):
+                try:
+                    from live_code_bench_execute import (
+                        check_correctness,
+                        unsafe_lcb_runTests,
+                        time_limit,
+                        post_process_timeout_tests_func,
+                        post_process_timeout_tests_stdin,
+                        unsafe_lcb_run_timeout_tests,
+                    )
+                    print('✓ live_code_bench_execute imports successful')
+                except ImportError as e:
+                    print(f'⚠ live_code_bench_execute import warning: {e}')
+            
+            if os.path.exists('lcb_dataset.py'):
+                try:
+                    from lcb_dataset import get_lcb_dataset
+                    print('✓ lcb_dataset import successful')
+                except ImportError as e:
+                    print(f'⚠ lcb_dataset import warning: {e}')
+                    
+        except Exception as e:
+            print(f'Import error: {e}')
+            exit(1)
+        "
+        
+    - name: Set environment variables
+      run: |
+        echo "FLASK_APP=api2.py" >> $GITHUB_ENV
+        echo "FLASK_ENV=production" >> $GITHUB_ENV
+        echo "PORT=5000" >> $GITHUB_ENV
+        
+    - name: Start Flask API (Option 1 - Direct Flask)
+      run: |
+        echo "Starting Flask API on port 5000..."
+        python -m flask run --host=0.0.0.0 --port=5000 &
+        FLASK_PID=$!
+        echo "Flask started with PID: $FLASK_PID"
+        
+        # Wait a moment for the server to start
+        sleep 5
+        
+        # Test if the API is running
+        if curl -f http://localhost:5000/ 2>/dev/null; then
+          echo "✓ Flask API is running successfully"
+        else
+          echo "⚠ Flask API health check failed, trying direct python execution..."
+          kill $FLASK_PID 2>/dev/null || true
+          
+          # Try running directly with python
+          python api2.py &
+          PYTHON_PID=$!
+          echo "Python API started with PID: $PYTHON_PID"
+          sleep 5
+          
+          if curl -f http://localhost:5000/ 2>/dev/null; then
+            echo "✓ Python API is running successfully"
+          else
+            echo "✗ API failed to start"
+            kill $PYTHON_PID 2>/dev/null || true
+            exit 1
+          fi
+        fi
+        
+    # Alternative option using uvicorn (uncomment if you prefer uvicorn)
+    # - name: Start API with Uvicorn (Option 2)
+    #   run: |
+    #     # Install uvicorn if not already installed
+    #     pip install uvicorn
+    #     
+    #     # Convert Flask app to ASGI if needed, or run directly
+    #     echo "Starting API with uvicorn..."
+    #     uvicorn api2:app --host 0.0.0.0 --port 5000 &
+    #     UVICORN_PID=$!
+    #     echo "Uvicorn started with PID: $UVICORN_PID"
+    #     
+    #     sleep 5
+    #     if curl -f http://localhost:5000/; then
+    #       echo "✓ Uvicorn API is running successfully"
+    #     else
+    #       echo "✗ Uvicorn API failed to start"
+    #       exit 1
+    #     fi
+        
+    - name: API Health Check
+      run: |
+        echo "Performing final health check..."
+        for i in {1..5}; do
+          if curl -f http://localhost:5000/ 2>/dev/null; then
+            echo "✓ API is healthy (attempt $i)"
+            break
+          else
+            echo "Waiting for API... (attempt $i)"
+            sleep 2
+          fi
+        done
+        
+    - name: Display API Info
+      run: |
+        echo "=== API Deployment Summary ==="
+        echo "API URL: http://localhost:5000"
+        echo "Flask App: api2.py"
+        echo "Port: 5000"
+        echo "Status: Running"
+        
+        # Show running processes
+        echo "=== Running Processes ==="
+        ps aux | grep -E "(flask|python|uvicorn)" | grep -v grep || true
+        
+        # Show port usage
+        echo "=== Port Usage ==="
+        netstat -tlnp | grep :5000 || true
